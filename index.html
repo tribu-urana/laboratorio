@@ -1,0 +1,755 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#06080c">
+<title>Laboratorio · Salas de práctica</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Victor+Mono:wght@400;500;700&family=Spectral:ital,wght@0,300;0,400;1,300;1,400&display=swap">
+<style>
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0}
+img{max-width:100%}
+[hidden]{display:none!important}
+/* layout: una columna estrecha sobre un cielo; cuando la práctica pide mirar afuera, la pantalla queda solo con palabras */
+:root{
+  --bg:#06080c; --surface:#0d1118; --line:#1d2531;
+  --fg:#dde5e8; --muted:#7b8894; --dim:#4a5560;
+  --teal:#5cd6c6; --lav:#b5a5f0;
+  --mono:"Victor Mono",ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+  --voice:"Spectral",Georgia,"Times New Roman",serif;
+  color-scheme:dark;
+}
+html,body{height:100%}
+body{background:var(--bg);color:var(--fg);font-family:var(--voice);font-size:17px;line-height:1.55;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  -webkit-font-smoothing:antialiased;overflow-x:hidden}
+#sky{position:fixed;inset:0;z-index:0;pointer-events:none;transition:opacity 3s}
+.wrap{position:relative;z-index:1;max-width:620px;margin:0 auto;padding-block:20px 48px;display:flex;flex-direction:column;gap:26px;min-height:100%;box-sizing:border-box}
+.mono{font-family:var(--mono);letter-spacing:.14em;text-transform:uppercase;font-size:11px}
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+header .brand{color:var(--muted)}
+header .brand b{color:var(--teal);font-weight:500}
+.chip{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;border:1px solid var(--line);color:var(--muted);background:transparent;padding:5px 9px;border-radius:2px;cursor:pointer}
+.chip:hover,.chip:focus-visible{border-color:var(--lav);color:var(--fg);outline:none}
+.notice{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;color:var(--lav);border-left:1px solid var(--lav);padding:4px 10px;text-transform:uppercase;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.notice select{font-family:var(--mono);font-size:11px;background:var(--surface);color:var(--fg);border:1px solid var(--line);padding:3px 6px;border-radius:2px}
+h1{font-family:var(--mono);font-weight:500;font-size:clamp(22px,6vw,30px);letter-spacing:.04em;line-height:1.15;margin:0;text-wrap:balance}
+h1 small{display:block;font-size:11px;letter-spacing:.18em;color:var(--muted);text-transform:uppercase;margin-bottom:10px;font-weight:400}
+.voice{font-family:var(--voice);font-weight:300;font-size:clamp(19px,4.6vw,23px);line-height:1.5;text-wrap:pretty;max-width:34ch;margin:0}
+.voice em{color:var(--teal);font-style:italic}
+.rule{height:1px;background:linear-gradient(90deg,var(--teal),var(--lav) 60%,transparent);opacity:.5;border:0;margin:0}
+
+/* la regla del ritmo */
+.ritmo{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;border:1px solid var(--line);padding:16px 18px;background:color-mix(in srgb,var(--surface) 70%,transparent)}
+.ritmo b{font-family:var(--mono);font-weight:500;color:var(--teal);font-size:12px;letter-spacing:.1em}
+.ritmo span{font-size:16px;line-height:1.45}
+.ritmo .h{grid-column:1/-1;font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--lav);margin-bottom:4px}
+
+/* salas */
+.salas{display:flex;flex-direction:column;gap:2px}
+.sala{display:grid;grid-template-columns:52px 1fr auto;gap:14px;align-items:center;padding:16px 4px;border:0;border-bottom:1px solid var(--line);background:none;color:inherit;text-align:left;cursor:pointer;font:inherit;width:100%}
+.sala:disabled{cursor:default}
+.sala:not(:disabled):hover .s-name,.sala:focus-visible .s-name{color:var(--teal)}
+.sala:focus-visible{outline:1px solid var(--lav);outline-offset:2px}
+.s-num{font-family:var(--mono);font-size:28px;color:var(--dim);font-variant-numeric:tabular-nums}
+.sala.open .s-num{color:var(--teal)}
+.s-name{font-family:var(--voice);font-size:19px;line-height:1.25;min-width:0}
+.sala:disabled .s-name{color:var(--muted)}
+.s-meta{display:block;font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-top:4px}
+.stars{display:flex;gap:5px}
+.stars i{width:7px;height:7px;border-radius:50%;border:1px solid var(--dim)}
+.stars i.lit{background:var(--teal);border-color:var(--teal);box-shadow:0 0 8px var(--teal)}
+
+/* prácticas */
+.practicas{display:flex;flex-direction:column}
+.pr{display:grid;grid-template-columns:84px 1fr auto;gap:12px;align-items:baseline;padding:16px 4px;border:0;border-bottom:1px solid var(--line);background:none;color:inherit;text-align:left;cursor:pointer;font:inherit;width:100%}
+.pr:not(:disabled):hover .pr-t,.pr:focus-visible .pr-t{color:var(--teal)}
+.pr:focus-visible{outline:1px solid var(--lav);outline-offset:2px}
+.pr:disabled{cursor:default}
+.pr:disabled .pr-t{color:var(--dim)}
+.pr-n{font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:var(--muted);font-variant-numeric:tabular-nums;text-transform:uppercase}
+.pr-t{font-size:19px;line-height:1.3;min-width:0}
+.pr-h{display:block;font-family:var(--voice);font-style:italic;font-weight:300;color:var(--lav);font-size:15px;margin-top:4px;overflow-wrap:anywhere}
+.pr-s{font-family:var(--mono);font-size:10px;letter-spacing:.12em;color:var(--dim);text-transform:uppercase;white-space:nowrap}
+.pr.done .pr-s{color:var(--teal)}
+.pr.today{background:color-mix(in srgb,var(--teal) 7%,transparent)}
+.pr.today .pr-n,.pr.today .pr-s{color:var(--teal)}
+.pr.late .pr-s{color:var(--lav)}
+.dias-hotmart{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);padding:14px 4px;display:flex;flex-wrap:wrap;gap:6px 12px}
+.dias-hotmart span:first-child{white-space:nowrap}
+
+.constel{width:100%;max-width:100%;aspect-ratio:16/9;display:block}
+
+/* escenario de práctica */
+.stage{display:flex;flex-direction:column;gap:22px;flex:1}
+.stage .top{display:flex;justify-content:space-between;gap:12px;align-items:center}
+.progress{display:flex;gap:4px;flex:1;max-width:220px}
+.progress i{height:2px;flex:1;background:var(--line)}
+.progress i.on{background:var(--teal)}
+.viz{position:relative;width:100%;max-width:100%;aspect-ratio:1/1;max-height:50vh;margin:0 auto;display:grid;place-items:center}
+.viz canvas{width:100%;height:100%;display:block}
+.timer{font-family:var(--mono);font-size:12px;letter-spacing:.2em;color:var(--muted);text-align:center;font-variant-numeric:tabular-nums}
+.bar{height:1px;background:var(--line);position:relative;overflow:hidden}
+.bar span{position:absolute;inset:0 auto 0 0;background:var(--teal);width:0}
+.actions{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:auto}
+.btn{font-family:var(--mono);font-size:12px;letter-spacing:.16em;text-transform:uppercase;padding:13px 20px;border:1px solid var(--teal);background:transparent;color:var(--teal);cursor:pointer;border-radius:2px}
+.btn:hover,.btn:focus-visible{background:color-mix(in srgb,var(--teal) 14%,transparent);outline:none}
+.btn:disabled{opacity:.35;cursor:default}
+.btn.ghost{border-color:var(--line);color:var(--muted)}
+.link{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);background:none;border:0;cursor:pointer;padding:8px 0}
+.link:hover,.link:focus-visible{color:var(--fg);outline:none;text-decoration:underline}
+.note{font-family:var(--mono);font-size:13px;letter-spacing:.03em;color:var(--lav);margin:0}
+
+/* mirar afuera: solo palabras */
+.look{flex:1;display:flex;flex-direction:column;justify-content:center;gap:18px;min-height:42vh}
+.look .cmd{font-family:var(--voice);font-weight:300;font-size:clamp(30px,8.5vw,46px);line-height:1.18;margin:0;text-wrap:balance}
+.look .cmd em{color:var(--teal);font-style:italic}
+.look .sub{font-family:var(--voice);font-style:italic;font-weight:300;color:var(--muted);font-size:19px;margin:0}
+
+label.f{display:flex;flex-direction:column;gap:8px}
+label.f > span{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+input[type=text],textarea{font-family:var(--voice);font-size:19px;color:var(--fg);background:var(--surface);border:1px solid var(--line);border-radius:2px;padding:12px 14px;width:100%;box-sizing:border-box;resize:vertical}
+input[type=text]:focus,textarea:focus{outline:none;border-color:var(--lav)}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:520px){.cols{grid-template-columns:1fr}}
+.range{display:flex;flex-direction:column;gap:10px}
+.range .ends{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+input[type=range]{width:100%;accent-color:var(--teal)}
+
+.count{display:flex;gap:14px;justify-content:center;padding:20px 0;flex-wrap:wrap}
+.count i{width:16px;height:16px;border-radius:50%;border:1px solid var(--dim);transition:all .5s}
+.count i.lit{background:var(--teal);border-color:var(--teal);box-shadow:0 0 14px var(--teal)}
+
+/* aviso de sonido */
+.sound{display:flex;flex-direction:column;gap:22px;flex:1;justify-content:center}
+.wave{display:flex;gap:6px;align-items:center;height:46px}
+.wave i{width:3px;background:var(--teal);border-radius:2px;height:8px;opacity:.5}
+.wave.on i{animation:w 1.1s ease-in-out infinite}
+.wave i:nth-child(2){animation-delay:.12s}.wave i:nth-child(3){animation-delay:.24s}.wave i:nth-child(4){animation-delay:.36s}.wave i:nth-child(5){animation-delay:.48s}
+@keyframes w{0%,100%{height:8px;opacity:.5}50%{height:42px;opacity:1}}
+.steps3{display:flex;flex-direction:column;gap:10px;margin:0;padding:0;list-style:none}
+.steps3 li{display:grid;grid-template-columns:26px 1fr;gap:10px;font-size:18px}
+.steps3 li b{font-family:var(--mono);color:var(--teal);font-weight:500;font-size:13px;padding-top:4px}
+
+.backup textarea{font-family:var(--mono);font-size:12px;height:90px}
+body.dimmed #sky{opacity:.15}
+body.dimmed .look .cmd{color:var(--muted)}
+.ignite{font-family:var(--mono);font-size:64px;color:var(--teal);text-align:center;text-shadow:0 0 30px var(--teal);animation:ig 2.4s ease-out}
+@keyframes ig{0%{opacity:0;transform:scale(.3)}60%{opacity:1;transform:scale(1.15)}100%{transform:scale(1)}}
+footer{font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--dim);text-transform:uppercase;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+@media (prefers-reduced-motion:reduce){.ignite,.wave.on i{animation:none}#sky{transition:none}}
+</style>
+
+</head>
+<body>
+<canvas id="sky" aria-hidden="true"></canvas>
+<div class="wrap" id="app"></div>
+
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script>
+/* ============ CONFIGURACIÓN DE COHORTES ============
+   Una línea por cohorte. Día 1 = fecha de inicio. */
+const COHORTES = [
+  { id: "dic-2026", inicio: "2026-12-01" }
+];
+const COHORTE = COHORTES[COHORTES.length - 1];
+const PREVIEW = true;   // prototipo: permite simular el día de la cohorte
+let SIMDIA = 3;         // día simulado en la vista previa
+
+const SALAS = [
+  { n:1, nombre:"El universo que piensa" },
+  { n:2, nombre:"El fin del patrón civilizatorio" },
+  { n:3, nombre:"La anatomía de la transformación" },
+  { n:4, nombre:"El ser que emerge" }
+];
+const POR_SALA = {1:[1,2,3,4,5],2:[6,7,8,9,10],3:[11,12,13,14,15],4:[16,17,18,19,20]};
+const salaDe = id => Math.ceil(id/5);
+const diaDe  = id => (salaDe(id)-1)*7 + ((id-1)%5) + 1;   // práctica 6 → día 8, etc.
+
+/* ============ TELEGRAM ============
+   Dentro de Telegram las huellas se guardan en la nube de Telegram, atadas a la cuenta de cada persona:
+   aparecen en cualquier dispositivo donde abra el laboratorio. Fuera de Telegram (vista previa) se usa el navegador. */
+const BOT_LINK = "https://t.me/TribuUranaLabBot/laboratorio";
+const TG = window.Telegram && window.Telegram.WebApp;
+const IN_TG = !!(TG && TG.initData);
+if(IN_TG){
+  try{ TG.ready(); TG.expand(); }catch(e){}
+  try{ TG.setHeaderColor("#06080c"); TG.setBackgroundColor("#06080c"); }catch(e){}
+  try{ TG.disableVerticalSwipes && TG.disableVerticalSwipes(); }catch(e){}
+}
+const CS = IN_TG && TG.CloudStorage;
+
+/* ============ ALMACENAMIENTO ============ */
+const KEY = "tribu_urana_lab_v1";
+let DB = {huellas:{}};
+function localLoad(){ try{ return JSON.parse(localStorage.getItem(KEY)) || {huellas:{}} }catch(e){ return {huellas:{}} } }
+function localSave(){ try{ localStorage.setItem(KEY, JSON.stringify(DB)) }catch(e){} }
+const hkey = id => "h"+id;
+function packHuella(h){
+  let s=JSON.stringify(h);
+  if(s.length>4000){ s=JSON.stringify({texto:h.texto,fecha:h.fecha}); }   // límite de Telegram: 4096 caracteres por dato
+  return s;
+}
+function loadAll(){
+  return new Promise(res=>{
+    DB = localLoad();
+    if(!CS) return res();
+    const keys = Array.from({length:20},(_,k)=>hkey(k+1));
+    try{
+      CS.getItems(keys,(err,vals)=>{
+        if(!err && vals){
+          const nube={};
+          for(const k of keys){ if(vals[k]){ try{ nube[+k.slice(1)]=JSON.parse(vals[k]) }catch(e){} } }
+          // lo que esté en el navegador y no en la nube se sube (por si se dejó una huella sin conexión)
+          for(const id in DB.huellas){ if(!nube[id]){ nube[id]=DB.huellas[id]; try{ CS.setItem(hkey(id), packHuella(DB.huellas[id])) }catch(e){} } }
+          DB.huellas = nube; localSave();
+        }
+        res();
+      });
+    }catch(e){ res(); }
+  });
+}
+function saveHuella(id){
+  localSave();
+  if(CS){ try{ CS.setItem(hkey(id), packHuella(DB.huellas[id])) }catch(e){} }
+}
+function wipeAll(){
+  DB={huellas:{}}; localSave();
+  if(CS){ try{ CS.removeItems(Array.from({length:20},(_,k)=>hkey(k+1))) }catch(e){} }
+}
+
+/* ============ SONIDO ============ */
+let AC = null;
+let SOUND_OK = false;
+try{ SOUND_OK = sessionStorage.getItem("tu_sound")==="1" }catch(e){}
+function audioReady(){
+  try{
+    if(navigator.audioSession) navigator.audioSession.type = "playback"; // iPhone: que suene aunque esté en silencio
+    AC = AC || new (window.AudioContext||window.webkitAudioContext)();
+    if(AC.state==="suspended") AC.resume();
+  }catch(e){}
+}
+function chime(strong){
+  audioReady();
+  try{
+    const t = AC.currentTime;
+    const notes = strong ? [[528,0],[792,.18],[1056,.36]] : [[528,0],[792,.12]];
+    notes.forEach(([f,d])=>{
+      const o = AC.createOscillator(), g = AC.createGain();
+      o.type="sine"; o.frequency.value=f;
+      g.gain.setValueAtTime(0,t+d); g.gain.linearRampToValueAtTime(.22,t+d+.03);
+      g.gain.exponentialRampToValueAtTime(.0001,t+d+2.8);
+      o.connect(g).connect(AC.destination); o.start(t+d); o.stop(t+d+2.9);
+    });
+  }catch(e){}
+  try{ navigator.vibrate && navigator.vibrate(strong?[180,90,180]:120) }catch(e){}
+}
+let wake=null;
+async function holdScreen(on){
+  try{
+    if(on && !wake && navigator.wakeLock) wake = await navigator.wakeLock.request("screen");
+    if(!on && wake){ await wake.release(); wake=null; }
+  }catch(e){ wake=null }
+}
+
+/* ============ FECHAS ============ */
+function diaHoy(){
+  if(PREVIEW) return SIMDIA;
+  return Math.floor((new Date()-new Date(COHORTE.inicio+"T00:00:00"))/864e5)+1;
+}
+function fechaDia(n){ const d=new Date(COHORTE.inicio+"T00:00:00"); d.setDate(d.getDate()+n-1); return d; }
+const fmt = d => d.toLocaleDateString("es-CL",{day:"numeric",month:"long"});
+const salaAbierta = n => diaHoy() >= (n-1)*7+1;
+const practicaAbierta = id => diaHoy() >= diaDe(id);
+function estado(id){
+  if(DB.huellas[id]) return "done";
+  const d=diaHoy(), dd=diaDe(id);
+  if(d<dd) return "locked";
+  if(d===dd) return "today";
+  return "late";
+}
+
+/* ============ PRÁCTICAS · SALA 1 ============
+   Tipos de paso: say, breath, look (mirar afuera: solo palabras), timer (con imagen en pantalla),
+   input, cols, range, count, huella */
+const UMBRAL = { type:"breath", cycles:2, text:"Antes de entrar, dos respiraciones. Sigue el círculo." };
+
+const PRACTICAS = {
+1:{ titulo:"Desde dónde miras", min:"3 min",
+  huellaPrompt:"Una palabra para cómo se sintió mirar desde adentro.",
+  steps:[
+    UMBRAL,
+    {type:"say", text:"Elige un objeto cercano. Algo simple: una taza, una piedra, tu mano.", note:"En los próximos pasos mira el objeto, no la pantalla. Un sonido te avisa cuando termina cada tiempo."},
+    {type:"look", secs:25, cmd:"Mira el objeto.", sub:"Tú aquí. Él allá. Un borde entre los dos."},
+    {type:"look", secs:25, cmd:"Míralo de nuevo, <em>desde adentro</em>.", sub:"Como el universo mirándose a sí mismo. Respira."},
+    {type:"say", text:"Quédate un momento con lo que cambió."},
+    {type:"huella", kind:"palabra"}
+  ]},
+2:{ titulo:"Lo pequeño que guarda lo grande", min:"3 min",
+  huellaPrompt:"Una frase sobre lo que la parte sabe del todo.",
+  steps:[
+    UMBRAL,
+    {type:"say", text:"Busca algo pequeño cerca de ti: una hoja, la piel de tu mano, el tejido de una tela. Y ubica algo grande: el cielo, el horizonte, la distancia por la ventana.", note:"Mira eso, no la pantalla. Un sonido marca cada cambio."},
+    {type:"look", secs:25, cmd:"Mira <em>lo pequeño</em>.", sub:"Hasta que se vuelva un mundo."},
+    {type:"look", secs:25, cmd:"Mira <em>lo grande</em>.", sub:"Deja que la mirada se abra."},
+    {type:"look", secs:15, cmd:"¿Qué sabe la parte del todo?", sub:"No respondas todavía."},
+    {type:"huella", kind:"frase"}
+  ]},
+3:{ titulo:"Si esto fuera una simulación", min:"4 min",
+  huellaPrompt:"Lo que harías igual.",
+  steps:[
+    UMBRAL,
+    {type:"input", key:"exp", label:"Una experiencia de hoy", ph:"una conversación, una comida, un paisaje…", text:"Elige algo que viviste hoy. Algo concreto."},
+    {type:"say", text:"Supón que esa experiencia ocurrió dentro de una simulación. Todo igual de real para ti. Solo cambia lo que crees que la sostiene."},
+    {type:"cols", a:{key:"cambia", label:"Lo que cambiarías"}, b:{key:"igual", label:"Lo que harías igual"}},
+    {type:"range", key:"ancla", left:"materia", right:"experiencia", text:"¿Dónde está tu anclaje?"},
+    {type:"huella", kind:"frase", prefill:"igual"}
+  ]},
+4:{ titulo:"Lo que no ves en este cuarto", min:"3 min",
+  huellaPrompt:"Una imagen o sensación que apareció en esa quietud.",
+  steps:[
+    UMBRAL,
+    {type:"count", n:5, text:"Cinco cosas que <em>ves</em>.", note:"Toca una vez por cada una."},
+    {type:"count", n:4, text:"Cuatro cosas que <em>oyes</em>."},
+    {type:"count", n:3, text:"Tres cosas que <em>sientes</em> en la piel."},
+    {type:"say", text:"Ahora quédate quieta. Sin buscar respuesta.", note:"Puedes cerrar los ojos. Un sonido te avisa."},
+    {type:"look", secs:25, dark:true, cmd:"¿Qué hay aquí que tus sentidos no registran?", sub:"Sostén el no saber."},
+    {type:"huella", kind:"imagen o sensación"}
+  ]},
+5:{ titulo:"Tu vida como paisaje", min:"4 min",
+  huellaPrompt:"Qué cambia si el pasado sigue existiendo.",
+  steps:[
+    UMBRAL,
+    {type:"say", text:"Vas a marcar tres momentos de tu vida en una línea."},
+    {type:"input", key:"pasado", label:"Un momento pasado", ph:"una tarde, un lugar, una edad…", text:"Uno que todavía sientes vivo."},
+    {type:"input", key:"ahora", label:"Este momento", ph:"dónde estás, qué hay ahora…", text:"Este. El de ahora."},
+    {type:"input", key:"futuro", label:"Un momento que imaginas", ph:"algo que todavía no ocurre…", text:"Uno que todavía no ocurre."},
+    {type:"timer", secs:25, mode:"landscape", text:"Mira la pantalla. Tres momentos <em>existiendo a la vez</em>."},
+    {type:"huella", kind:"frase"}
+  ]}
+};
+
+/* ============ CIELO DE FONDO ============ */
+const sky = document.getElementById("sky"), sctx = sky.getContext("2d");
+let STARS=[];
+function sizeSky(){
+  const dpr=Math.min(2,window.devicePixelRatio||1);
+  sky.width=innerWidth*dpr; sky.height=innerHeight*dpr; sctx.setTransform(dpr,0,0,dpr,0,0);
+  STARS=Array.from({length:Math.round(innerWidth*innerHeight/9000)},()=>({x:Math.random()*innerWidth,y:Math.random()*innerHeight,r:Math.random()*.9+.2,p:Math.random()*6}));
+}
+function drawSky(t){
+  requestAnimationFrame(drawSky);
+  sctx.clearRect(0,0,innerWidth,innerHeight);
+  for(const s of STARS){
+    const a=.18+.22*(.5+.5*Math.sin(t/1600+s.p));
+    sctx.fillStyle=`rgba(200,214,230,${a})`;
+    sctx.beginPath(); sctx.arc(s.x,s.y,Math.max(.2,s.r),0,Math.PI*2); sctx.fill();
+  }
+}
+addEventListener("resize",sizeSky); sizeSky(); requestAnimationFrame(drawSky);
+
+/* ============ VISTAS ============ */
+const app = document.getElementById("app");
+let stopLoop = null;
+function clearLoop(){ if(stopLoop){ stopLoop(); stopLoop=null } }
+const lit = n => !!DB.huellas[n];
+const pad = n => String(n).padStart(2,"0");
+
+function header(){
+  return `<header>
+    <div class="mono brand"><b>TRIBU_URANA</b> · LABORATORIO_DE_REINICIO_ONTOLÓGICO</div>
+    <button class="chip" id="bk">mis huellas</button>
+  </header>
+  ${PREVIEW?`<div class="notice"><span>vista previa · simular</span>
+    <select id="sim" aria-label="Simular día de la cohorte">${Array.from({length:28},(_,k)=>`<option value="${k+1}" ${k+1===SIMDIA?"selected":""}>día ${k+1}</option>`).join("")}</select></div>`:""}`;
+}
+let CURRENT = ["home"];
+function bindHeader(){
+  const b=document.getElementById("bk"); if(b) b.onclick=()=>go("backup");
+  const s=document.getElementById("sim"); if(s) s.onchange=()=>{ SIMDIA=+s.value; go(...CURRENT); };
+}
+
+/* aviso de sonido: una vez por sesión, antes de todo */
+function viewSound(after){
+  app.innerHTML = `
+    <div class="sound">
+      <div class="mono" style="color:var(--muted)"><b style="color:var(--teal);font-weight:500">TRIBU_URANA</b> · LABORATORIO</div>
+      <h1>Activa el sonido</h1>
+      <p class="voice">Muchas prácticas se hacen mirando fuera de la pantalla. Un sonido te avisa cuando termina cada tiempo.</p>
+      <ul class="steps3">
+        <li><b>01</b><span>Sube el volumen de tu dispositivo.</span></li>
+        <li><b>02</b><span>Quita el modo silencio.</span></li>
+        <li><b>03</b><span>Toca probar.</span></li>
+      </ul>
+      <div class="wave" id="wv" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+      <div class="actions" id="sa"><button class="btn" id="test">probar sonido</button></div>
+    </div>`;
+  document.getElementById("test").onclick=()=>{
+    chime(true);
+    const wv=document.getElementById("wv"); wv.classList.add("on"); setTimeout(()=>wv.classList.remove("on"),2600);
+    document.getElementById("sa").innerHTML=`
+      <p class="voice" style="width:100%">¿Lo escuchaste?</p>
+      <button class="btn" id="yes">sí, entrar</button>
+      <button class="btn ghost" id="no">no</button>`;
+    document.getElementById("yes").onclick=()=>{ SOUND_OK=true; try{sessionStorage.setItem("tu_sound","1")}catch(e){} after(); };
+    document.getElementById("no").onclick=()=>{
+      document.getElementById("sa").innerHTML=`
+        <p class="note" style="width:100%">Revisa el volumen y el interruptor o modo silencio. Si usas audífonos, confirma que estén conectados.</p>
+        <button class="btn" id="again">probar de nuevo</button>`;
+      document.getElementById("again").onclick=()=>viewSound(after);
+    };
+  };
+}
+
+function viewHome(){
+  const total = Object.keys(DB.huellas).length, d=diaHoy();
+  const hoyId = Object.keys(POR_SALA).flatMap(k=>POR_SALA[k]).find(id=>diaDe(id)===d);
+  let hoyTxt;
+  if(d<1) hoyTxt=`El laboratorio comienza el ${fmt(fechaDia(1))}.`;
+  else if(d>28) hoyTxt=`El laboratorio terminó. Tus huellas siguen aquí.`;
+  else if(hoyId) hoyTxt=`Hoy toca la cápsula ${hoyId}. Después de verla, haz su práctica: <em>${PRACTICAS[hoyId]?.titulo||"en construcción"}</em>.`;
+  else hoyTxt=`Hoy no hay cápsula. Es ${(d-1)%7===5?"día de bitácora":"día de ritual"}, en Hotmart.`;
+  app.innerHTML = header() + `
+    <h1><small>${total} de 20 huellas</small>Cuatro salas.<br>Veinte prácticas.<br><span style="color:var(--teal)">Una para cada cápsula.</span></h1>
+    <p class="voice">${hoyTxt}</p>
+    <div class="ritmo">
+      <div class="h">el ritmo</div>
+      <b>1</b><span>Cada cápsula tiene su práctica, con el mismo número.</span>
+      <b>2</b><span>Primero ves la cápsula. Después haces su práctica, ese mismo día.</span>
+      <b>3</b><span>Cada práctica se abre junto con su cápsula. Si te atrasas, puedes ponerte al día con las anteriores.</span>
+    </div>
+    <div class="salas">
+      ${SALAS.map(s=>{
+        const ok=salaAbierta(s.n), ids=POR_SALA[s.n], built=s.n===1, d1=(s.n-1)*7+1;
+        return `<button class="sala ${ok?"open":""}" data-s="${s.n}" ${ok&&built?"":"disabled"}>
+          <span class="s-num">0${s.n}</span>
+          <span class="s-name">${s.nombre}
+            <span class="s-meta">${!ok?`se abre el ${fmt(fechaDia(d1))}`:built?`cápsulas ${(s.n-1)*5+1} a ${s.n*5}`:"en construcción"}</span></span>
+          <span class="stars">${ids.map(i=>`<i class="${lit(i)?"lit":""}"></i>`).join("")}</span>
+        </button>`}).join("")}
+    </div>
+    <footer><span>${IN_TG?"tus huellas viajan con tu cuenta de telegram":"vista previa · huellas en este navegador"}</span><span>solo tú las ves</span></footer>`;
+  bindHeader();
+  app.querySelectorAll(".sala:not(:disabled)").forEach(b=>b.onclick=()=>go("sala",+b.dataset.s));
+}
+
+function viewSala(n){
+  const s=SALAS[n-1], ids=POR_SALA[n], done=ids.filter(lit).length, d1=(n-1)*7+1;
+  const label = {done:"huella ✦", today:"hoy", late:"pendiente", locked:""};
+  app.innerHTML = header() + `
+    <button class="link" id="back">← salas</button>
+    <h1><small>sala_0${n} · ${done} de 5 estrellas</small>${s.nombre}</h1>
+    <canvas class="constel" id="cst"></canvas>
+    <div class="practicas">
+      ${ids.map(i=>{const p=PRACTICAS[i], h=DB.huellas[i], st=estado(i); return `
+        <button class="pr ${st}" data-p="${i}" ${st==="locked"?"disabled":""}>
+          <span class="pr-n">cápsula ${i}</span>
+          <span class="pr-t">${p.titulo}${h?`<span class="pr-h">“${esc(h.texto)}”</span>`:""}</span>
+          <span class="pr-s">${st==="locked"?fmt(fechaDia(diaDe(i))):label[st]}</span>
+        </button>`}).join("")}
+      <div class="dias-hotmart"><span>después</span><span>bitácora y ritual, en Hotmart</span></div>
+    </div>
+    ${done===5?`<p class="voice">Tu constelación está completa.</p>`:""}`;
+  bindHeader();
+  document.getElementById("back").onclick=()=>go("home");
+  app.querySelectorAll(".pr:not(:disabled)").forEach(b=>b.onclick=()=>go("intro",+b.dataset.p));
+  drawConstel(document.getElementById("cst"), ids);
+}
+
+/* constelación de la sala */
+const CPOS = [[.14,.62],[.31,.30],[.52,.48],[.70,.22],[.86,.58]];
+function drawConstel(cv, ids){
+  const dpr=Math.min(2,devicePixelRatio||1);
+  cv.width=cv.clientWidth*dpr; cv.height=cv.clientHeight*dpr;
+  const c=cv.getContext("2d"); let alive=true;
+  const css=getComputedStyle(document.documentElement);
+  const teal=css.getPropertyValue("--teal").trim(), lav=css.getPropertyValue("--lav").trim(), dim=css.getPropertyValue("--dim").trim();
+  function frame(t){
+    if(!alive) return;
+    requestAnimationFrame(frame);
+    const W=cv.width,H=cv.height; c.clearRect(0,0,W,H);
+    const P=CPOS.map(([x,y])=>[x*W,y*H]);
+    for(let i=0;i<4;i++){
+      const both=lit(ids[i])&&lit(ids[i+1]);
+      c.strokeStyle=both?lav:dim; c.globalAlpha=both?.7:.35; c.lineWidth=(both?1.4:1)*dpr;
+      c.setLineDash(both?[]:[3*dpr,6*dpr]);
+      c.beginPath(); c.moveTo(...P[i]); c.lineTo(...P[i+1]); c.stroke();
+    }
+    c.setLineDash([]); c.globalAlpha=1;
+    P.forEach(([x,y],i)=>{
+      const on=lit(ids[i]);
+      if(on){
+        const R=Math.max(1,22*dpr*(1+.18*Math.sin(t/900+i)));
+        const g=c.createRadialGradient(x,y,0,x,y,R);
+        g.addColorStop(0,teal); g.addColorStop(1,"rgba(0,0,0,0)");
+        c.fillStyle=g; c.globalAlpha=.55; c.beginPath(); c.arc(x,y,R,0,7); c.fill(); c.globalAlpha=1;
+        c.fillStyle=teal; c.beginPath(); c.arc(x,y,4*dpr,0,7); c.fill();
+      }else{
+        c.strokeStyle=dim; c.lineWidth=1*dpr; c.beginPath(); c.arc(x,y,4*dpr,0,7); c.stroke();
+      }
+      c.fillStyle=on?teal:dim; c.font=`${10*dpr}px "Victor Mono",monospace`; c.textAlign="center";
+      c.fillText(pad(ids[i]),x,y+20*dpr);
+    });
+  }
+  requestAnimationFrame(frame);
+  stopLoop=()=>{alive=false};
+}
+
+function viewIntro(id){
+  const p=PRACTICAS[id], h=DB.huellas[id], st=estado(id), n=salaDe(id);
+  const aviso = st==="late" ? `<p class="note">Esta práctica es de la cápsula ${id}. Si aún no la ves, hazlo antes en Hotmart.</p>`
+              : st==="today" ? `<p class="note">Hazla después de ver la cápsula ${id} de hoy.</p>` : "";
+  app.innerHTML = header() + `
+    <button class="link" id="back">← sala_0${n}</button>
+    <h1><small>cápsula ${id} · ${p.min}</small>${p.titulo}</h1>
+    ${h?`<p class="voice">Tu huella: <em>${esc(h.texto)}</em></p><p class="mono" style="color:var(--muted)">dejada el ${fmt(new Date(h.fecha))}</p>`:
+        `<p class="voice">Busca un lugar donde nadie te interrumpa por unos minutos.</p>${aviso}`}
+    <div class="actions">
+      <button class="btn" id="go">${h?"hacerla de nuevo":"comenzar"}</button>
+    </div>`;
+  bindHeader();
+  document.getElementById("back").onclick=()=>go("sala",n);
+  document.getElementById("go").onclick=()=>{ audioReady(); runPractice(id); };
+}
+
+/* ============ MOTOR DE PRÁCTICA ============ */
+function runPractice(id){
+  const p=PRACTICAS[id]; const ctx={};
+  let i=0;
+  CURRENT=["intro",id];
+  holdScreen(true);
+  const next=()=>{ clearLoop(); document.body.classList.remove("dimmed"); i++; if(i<p.steps.length) step(); };
+  function shell(inner){
+    app.innerHTML = `
+      <div class="stage">
+        <div class="top">
+          <button class="link" id="quit">✕ salir</button>
+          <div class="progress">${p.steps.map((_,k)=>`<i class="${k<=i?"on":""}"></i>`).join("")}</div>
+        </div>
+        <div class="mono" style="color:var(--muted)">${pad(id)} · ${p.titulo}</div>
+        ${inner}
+      </div>`;
+    document.getElementById("quit").onclick=exit;
+  }
+  function exit(){ clearLoop(); document.body.classList.remove("dimmed"); holdScreen(false); go("intro",id); }
+  function countdown(secs, onEnd){
+    const bar=document.getElementById("bar"), tm=document.getElementById("tm");
+    const t0=performance.now(); let alive=true;
+    (function f(now){
+      if(!alive) return;
+      requestAnimationFrame(f);
+      const el=(now-t0)/1000;
+      bar.style.width=Math.min(100,el/secs*100)+"%";
+      tm.textContent=pad(Math.max(0,Math.ceil(secs-el)))+" s";
+      if(el>=secs){ alive=false; onEnd(); }
+    })(t0);
+    stopLoop=()=>{alive=false};
+  }
+  function step(){
+    const s=p.steps[i];
+    if(s.type==="say"){
+      shell(`<p class="voice">${s.text}</p>${s.note?`<p class="note">${s.note}</p>`:""}
+        <div class="actions"><button class="btn" id="n">continuar</button></div>`);
+      document.getElementById("n").onclick=next;
+    }
+    else if(s.type==="breath"){
+      shell(`<p class="voice">${s.text}</p><div class="viz"><canvas id="v"></canvas></div><div class="timer" id="ph">&nbsp;</div>
+        <div class="actions"><button class="link" id="skip">saltar →</button></div>`);
+      document.getElementById("skip").onclick=next;
+      breathViz(document.getElementById("v"), document.getElementById("ph"), s.cycles, ()=>{chime(); next();});
+    }
+    else if(s.type==="look"){
+      if(s.dark) document.body.classList.add("dimmed");
+      shell(`<div class="look"><p class="cmd">${s.cmd}</p>${s.sub?`<p class="sub">${s.sub}</p>`:""}</div>
+        <div class="bar"><span id="bar"></span></div><div class="timer" id="tm"></div>
+        <div class="actions"><button class="link" id="skip">pasar →</button></div>`);
+      document.getElementById("skip").onclick=next;
+      countdown(s.secs, ()=>{ chime(true); next(); });
+    }
+    else if(s.type==="timer"){
+      shell(`<p class="voice">${s.text}</p><div class="viz"><canvas id="v"></canvas></div>
+        <div class="bar"><span id="bar"></span></div><div class="timer" id="tm"></div>
+        <div class="actions"><button class="link" id="skip">pasar →</button></div>`);
+      document.getElementById("skip").onclick=next;
+      landscapeViz(document.getElementById("v"), ctx);
+      const stopViz=stopLoop;
+      countdown(s.secs, ()=>{ stopViz(); chime(true); next(); });
+      const stopCd=stopLoop; stopLoop=()=>{stopViz(); stopCd();};
+    }
+    else if(s.type==="input"){
+      shell(`<p class="voice">${s.text}</p>
+        <label class="f"><span>${s.label}</span><input type="text" id="in-${s.key}" maxlength="80" placeholder="${s.ph||""}" value="${esc(ctx[s.key]||"")}"></label>
+        <div class="actions"><button class="btn" id="n" disabled>continuar</button></div>`);
+      const inp=document.getElementById("in-"+s.key), b=document.getElementById("n");
+      const upd=()=>{b.disabled=!inp.value.trim()}; inp.oninput=upd; upd(); inp.focus();
+      inp.onkeydown=e=>{if(e.key==="Enter"&&!b.disabled) b.click()};
+      b.onclick=()=>{ctx[s.key]=inp.value.trim(); next();};
+    }
+    else if(s.type==="cols"){
+      shell(`${ctx.exp?`<p class="voice"><em>${esc(ctx.exp)}</em></p>`:""}
+        <div class="cols">
+          <label class="f"><span>${s.a.label}</span><textarea id="ca" rows="4"></textarea></label>
+          <label class="f"><span>${s.b.label}</span><textarea id="cb" rows="4"></textarea></label>
+        </div>
+        <div class="actions"><button class="btn" id="n" disabled>continuar</button></div>`);
+      const a=document.getElementById("ca"), b2=document.getElementById("cb"), b=document.getElementById("n");
+      const upd=()=>{b.disabled=!b2.value.trim()}; a.oninput=upd; b2.oninput=upd;
+      b.onclick=()=>{ctx[s.a.key]=a.value.trim(); ctx[s.b.key]=b2.value.trim(); next();};
+    }
+    else if(s.type==="range"){
+      shell(`<p class="voice">${s.text}</p>
+        <div class="range"><input type="range" id="rg" min="0" max="100" value="50" aria-label="${s.text}">
+          <div class="ends"><span>${s.left}</span><span>${s.right}</span></div></div>
+        <div class="actions"><button class="btn" id="n">continuar</button></div>`);
+      document.getElementById("n").onclick=()=>{ctx[s.key]=+document.getElementById("rg").value; next();};
+    }
+    else if(s.type==="count"){
+      shell(`<p class="voice">${s.text}</p>${s.note?`<p class="note">${s.note}</p>`:""}
+        <div class="count" id="ct">${Array.from({length:s.n},()=>`<i></i>`).join("")}</div>
+        <div class="actions"><button class="btn" id="one">una más</button></div>`);
+      let k=0; const dots=[...document.querySelectorAll("#ct i")], b=document.getElementById("one");
+      b.onclick=()=>{ dots[k].classList.add("lit"); k++; if(k>=s.n){ b.disabled=true; setTimeout(next,1100);} };
+    }
+    else if(s.type==="huella"){
+      const pre = s.prefill ? (ctx[s.prefill]||"").split("\n")[0].slice(0,120) : "";
+      shell(`<p class="voice">${p.huellaPrompt}</p>
+        <label class="f"><span>tu huella · ${s.kind}</span><input type="text" id="hu" maxlength="120" value="${esc(pre)}"></label>
+        <div class="actions"><button class="btn" id="n" disabled>dejar huella</button></div>`);
+      const inp=document.getElementById("hu"), b=document.getElementById("n");
+      const upd=()=>{b.disabled=!inp.value.trim()}; inp.oninput=upd; upd(); inp.focus();
+      inp.onkeydown=e=>{if(e.key==="Enter"&&!b.disabled) b.click()};
+      b.onclick=()=>{
+        DB.huellas[id]={texto:inp.value.trim(), fecha:new Date().toISOString(), extra:ctx};
+        saveHuella(id); chime(); holdScreen(false);
+        const sig = POR_SALA[salaDe(id)].find(x=>x>id && !lit(x));
+        const cierre = sig && !practicaAbierta(sig) ? `La práctica ${pad(sig)} se abre con la cápsula ${sig}, el ${fmt(fechaDia(diaDe(sig)))}.` : "";
+        app.innerHTML=`<div class="stage" style="justify-content:center;align-items:center;gap:26px;text-align:center">
+          <div class="ignite">✦</div>
+          <p class="voice" style="margin:0 auto">Se encendió la estrella ${pad(id)}.</p>
+          <p class="mono" style="color:var(--lav)">“${esc(DB.huellas[id].texto)}”</p>
+          ${cierre?`<p class="note">${cierre}</p>`:""}
+          <button class="btn" id="n">ver tu constelación</button></div>`;
+        document.getElementById("n").onclick=()=>go("sala",salaDe(id));
+      };
+    }
+  }
+  step();
+}
+
+/* respiración 4-2-6-2 (ritmo del ritual) */
+const PH=[["inhala",4],["sostén",2],["exhala",6],["pausa",2]];
+function breathViz(cv, label, cycles, done){
+  const c=cv.getContext("2d"), dpr=Math.min(2,devicePixelRatio||1);
+  cv.width=cv.clientWidth*dpr; cv.height=cv.clientHeight*dpr;
+  const css=getComputedStyle(document.documentElement), teal=css.getPropertyValue("--teal").trim(), lav=css.getPropertyValue("--lav").trim();
+  const T=14, t0=performance.now(); let alive=true;
+  function f(now){
+    if(!alive) return;
+    requestAnimationFrame(f);
+    const el=(now-t0)/1000;
+    if(el>=T*cycles){ alive=false; done(); return; }
+    const tc=el%T; let acc=0, ph=0;
+    for(;ph<4;ph++){ if(tc<acc+PH[ph][1]) break; acc+=PH[ph][1]; }
+    const u=(tc-acc)/PH[ph][1], e=x=>.5-.5*Math.cos(Math.PI*x);
+    const s = ph===0?e(u):ph===1?1:ph===2?1-e(u):0;
+    label.textContent=PH[ph][0].toUpperCase()+" · "+(PH[ph][1]-Math.floor(tc-acc));
+    const W=cv.width,H=cv.height, R=Math.max(1,Math.min(W,H)*(.18+.2*s));
+    c.clearRect(0,0,W,H);
+    c.strokeStyle=lav; c.globalAlpha=.25; c.lineWidth=1*dpr; c.beginPath(); c.arc(W/2,H/2,Math.min(W,H)*.38,0,7); c.stroke();
+    const g=c.createRadialGradient(W/2,H/2,0,W/2,H/2,R);
+    g.addColorStop(0,teal); g.addColorStop(1,"rgba(0,0,0,0)");
+    c.globalAlpha=.35+.25*s; c.fillStyle=g; c.beginPath(); c.arc(W/2,H/2,R,0,7); c.fill();
+    c.globalAlpha=.9; c.strokeStyle=teal; c.lineWidth=1.5*dpr; c.beginPath(); c.arc(W/2,H/2,R,0,7); c.stroke();
+    c.globalAlpha=1;
+  }
+  requestAnimationFrame(f);
+  stopLoop=()=>{alive=false};
+}
+
+/* la línea que se vuelve paisaje (práctica 5: aquí sí se mira la pantalla) */
+function landscapeViz(cv, ctx){
+  const c=cv.getContext("2d"), dpr=Math.min(2,devicePixelRatio||1);
+  cv.width=cv.clientWidth*dpr; cv.height=cv.clientHeight*dpr;
+  const css=getComputedStyle(document.documentElement), teal=css.getPropertyValue("--teal").trim(), lav=css.getPropertyValue("--lav").trim(), dim=css.getPropertyValue("--dim").trim();
+  const t0=performance.now(); let alive=true;
+  function f(now){
+    if(!alive) return;
+    requestAnimationFrame(f);
+    const el=(now-t0)/1000, m=Math.min(1,el/8), e=.5-.5*Math.cos(Math.PI*m);
+    const W=cv.width,H=cv.height, y0=H*.62; c.clearRect(0,0,W,H);
+    const hY=x=> y0 - e*(H*.16*Math.sin(x/W*Math.PI*2.2+.6)+H*.07*Math.sin(x/W*Math.PI*6.1))*(.4+.6*Math.sin(x/W*Math.PI));
+    [[.65,dim],[1,lav]].forEach(([sc,col],li)=>{
+      c.strokeStyle=col; c.globalAlpha=li?.8:.4; c.lineWidth=(li?1.4:1)*dpr; c.beginPath();
+      for(let x=0;x<=W;x+=4){ const yy=y0+(hY(x)-y0)*sc-(li?0:H*.08*e); x?c.lineTo(x,yy):c.moveTo(x,yy); }
+      c.stroke();
+    });
+    c.globalAlpha=1;
+    [["pasado",.18],["ahora",.5],["futuro",.82]].forEach(([k,fx],i)=>{
+      const x=W*fx, y=hY(x);
+      const pulse=Math.max(1,(10+3*Math.sin(el*1.6+i))*dpr*(.4+.6*e));
+      const g=c.createRadialGradient(x,y,0,x,y,pulse*3);
+      g.addColorStop(0,teal); g.addColorStop(1,"rgba(0,0,0,0)");
+      c.fillStyle=g; c.globalAlpha=.7; c.beginPath(); c.arc(x,y,pulse*3,0,7); c.fill();
+      c.globalAlpha=1; c.fillStyle=teal; c.beginPath(); c.arc(x,y,3.5*dpr,0,7); c.fill();
+      c.fillStyle=lav; c.font=`italic ${13*dpr}px Spectral,Georgia,serif`; c.textAlign="center";
+      const txt=(ctx[k]||k), short=txt.length>22?txt.slice(0,21)+"…":txt;
+      c.globalAlpha=.4+.6*e; c.fillText(short,x,y-pulse*3-6*dpr); c.globalAlpha=1;
+    });
+  }
+  requestAnimationFrame(f);
+  stopLoop=()=>{alive=false};
+}
+
+/* ============ MIS HUELLAS ============ */
+function viewBackup(){
+  const ids=Object.keys(DB.huellas).map(Number).sort((x,y)=>x-y);
+  app.innerHTML = header() + `
+    <button class="link" id="back">← salas</button>
+    <h1><small>${ids.length} de 20</small>Mis huellas</h1>
+    <p class="voice">${IN_TG?"Se guardan en tu cuenta de Telegram. Si abres el laboratorio desde otro dispositivo, aquí estarán.":"Vista previa: aquí se guardan solo en este navegador. Dentro de Telegram viajan con la cuenta de cada persona."}</p>
+    <div class="practicas">
+      ${ids.length?ids.map(i=>`<div class="pr done" style="cursor:default">
+        <span class="pr-n">cápsula ${i}</span>
+        <span class="pr-t">${PRACTICAS[i]?.titulo||""}<span class="pr-h">“${esc(DB.huellas[i].texto)}”</span></span>
+        <span class="pr-s">${fmt(new Date(DB.huellas[i].fecha))}</span></div>`).join(""):`<p class="note">Todavía no hay huellas. La primera se deja al terminar la práctica de la cápsula 1.</p>`}
+    </div>
+    <div class="actions"><button class="link" id="wipe">borrar todas mis huellas</button><span class="mono" id="wok" style="color:var(--lav)"></span></div>`;
+  bindHeader();
+  document.getElementById("back").onclick=()=>go("home");
+  let armed=false;
+  document.getElementById("wipe").onclick=e=>{
+    if(!armed){ armed=true; e.target.textContent="toca de nuevo para borrarlas para siempre"; return; }
+    wipeAll(); go("backup");
+  };
+}
+
+/* fuera de Telegram, en la versión real: indicar dónde está el laboratorio */
+function viewSoloTelegram(){
+  app.innerHTML = `
+    <div class="sound">
+      <div class="mono" style="color:var(--muted)"><b style="color:var(--teal);font-weight:500">TRIBU_URANA</b> · LABORATORIO</div>
+      <h1>Tus prácticas están en Telegram</h1>
+      <p class="voice">Abre Telegram, entra al bot de Tribu Urana y toca <em>Laboratorio</em>.</p>
+      ${BOT_LINK?`<div class="actions"><a class="btn" href="${BOT_LINK}" target="_blank" rel="noopener" style="text-decoration:none">abrir en telegram</a></div>`:""}
+    </div>`;
+}
+
+/* ============ NAVEGACIÓN ============ */
+function esc(s){ return String(s??"").replace(/[&<>"]/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[ch])); }
+function go(v,arg){
+  clearLoop(); document.body.classList.remove("dimmed"); holdScreen(false); scrollTo(0,0);
+  if(!SOUND_OK){ viewSound(()=>go(v,arg)); return; }
+  CURRENT=[v,arg];
+  if(v==="home") viewHome();
+  else if(v==="sala") viewSala(arg);
+  else if(v==="intro") viewIntro(arg);
+  else if(v==="backup") viewBackup();
+}
+if(!IN_TG && !PREVIEW){ viewSoloTelegram(); }
+else { app.innerHTML=`<p class="mono" style="color:var(--muted);margin-top:40vh;text-align:center">abriendo tu cielo…</p>`; loadAll().then(()=>go("home")); }
+</script>
+
+</body>
+</html>
