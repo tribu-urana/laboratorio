@@ -119,6 +119,11 @@ input[type=text]:focus,textarea:focus{outline:none;border-color:var(--lav)}
 .range .ends{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
 input[type=range]{width:100%;accent-color:var(--teal)}
 
+.opts{display:flex;flex-wrap:wrap;gap:10px}
+.opt{font-family:var(--voice);font-size:18px;padding:9px 16px;border:1px solid var(--line);background:transparent;color:var(--fg);border-radius:999px;cursor:pointer}
+.opt:hover,.opt:focus-visible{border-color:var(--lav);outline:none}
+.opt[aria-pressed=true]{border-color:var(--teal);color:var(--teal);background:color-mix(in srgb,var(--teal) 10%,transparent)}
+.clist{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:6px;font-style:italic;font-weight:300;color:var(--lav)}
 .count{display:flex;gap:14px;justify-content:center;padding:20px 0;flex-wrap:wrap}
 .count i{width:16px;height:16px;border-radius:50%;border:1px solid var(--dim);transition:all .5s}
 .count i.lit{background:var(--teal);border-color:var(--teal);box-shadow:0 0 14px var(--teal)}
@@ -340,8 +345,73 @@ const PRACTICAS = {
     {type:"input", key:"futuro", label:"Un momento que imaginas", ph:"algo que todavía no ocurre…", text:"Uno que todavía no ocurre."},
     {type:"timer", secs:25, mode:"landscape", text:"Mira la pantalla. Tres momentos <em>existiendo a la vez</em>."},
     {type:"huella", kind:"frase"}
+  ]},
+
+/* ============ PRÁCTICAS · SALA 2 ============ */
+6:{ titulo:"Crisis o colapso", min:"4 min",
+  huellaPrompt:"El ámbito y lo que pide algo distinto.",
+  steps:[
+    UMBRAL,
+    {type:"choose", key:"ambito", text:"Elige un ámbito de tu vida donde algo no está funcionando.",
+      opts:["trabajo","vínculos","economía","salud","casa"], otro:true},
+    {type:"choose", key:"hacer", multi:true, text:c=>`En <em>${esc(c.ambito)}</em>, ¿qué has estado haciendo?`, note:"Puedes marcar más de una.",
+      opts:["reparar","optimizar","ajustar","aguantar","esperar"]},
+    {type:"say", text:"Una crisis se repara: el sistema vuelve a funcionar. Un colapso no: lo que lo sostenía ya no está."},
+    {type:"choose", key:"cc", text:c=>`Lo que vives en <em>${esc(c.ambito)}</em>, ¿es crisis o colapso?`,
+      opts:["crisis","colapso","todavía no lo sé"]},
+    {type:"input", long:true, key:"distinto", label:"lo que pide algo distinto", ph:"no más de lo mismo, sino…",
+      text:c=>`Si ${esc(c.hacer)} ya no alcanza, ¿qué pediría algo <em>cualitativamente distinto</em>?`, note:"No mejor. Distinto."},
+    {type:"huella", kind:"frase", prefill:c=>`${c.ambito}: ${c.distinto}`}
+  ]},
+7:{ titulo:"El patrón bajo los hechos", min:"4 min",
+  huellaPrompt:"El nombre que le das a ese patrón.",
+  steps:[
+    UMBRAL,
+    {type:"say", text:"Piensa en algo que te ha pasado más de una vez. Otras personas, otros años, una forma parecida."},
+    {type:"input", key:"ep1", label:"primer episodio", ph:"cuándo, con quién, qué pasó…", text:"El más antiguo que recuerdas."},
+    {type:"input", key:"ep2", label:"segundo episodio", ph:"cuándo, con quién, qué pasó…", text:"Otro, más tarde."},
+    {type:"input", key:"ep3", label:"tercer episodio", ph:"cuándo, con quién, qué pasó…", text:"El más reciente."},
+    {type:"timer", secs:20, mode:"spiral", text:"Mira la pantalla. Tres vueltas de <em>una misma espiral</em>."},
+    {type:"input", long:true, key:"fondo", label:"lo que se repite", ph:"siempre que…, yo…",
+      text:"¿Qué se repite en el fondo? No los hechos: la forma.", note:"Lo que está debajo de los tres."},
+    {type:"huella", kind:"nombre"}
+  ]},
+8:{ titulo:"Fin de ciclo, no fin de mundo", min:"3 min",
+  huellaPrompt:"En una palabra, lo que te sostiene.",
+  steps:[
+    {type:"input", key:"termina", label:"algo que está terminando", ph:"una etapa, un vínculo, una forma de vivir…",
+      text:"Piensa en algo que está terminando. En tu vida o a tu alrededor."},
+    {type:"choose", key:"cuerpo", multi:true, otro:true, text:"Quédate un momento con eso. ¿Dónde se contrae el cuerpo?",
+      opts:["garganta","mandíbula","pecho","estómago","hombros","espalda"]},
+    {type:"say", text:"Ahora vas a respirar con la imagen de un parto, no de un final.", note:"Algo termina porque algo empuja para nacer."},
+    {type:"breath", cycles:2, text:"Inhala en cuatro. Sostén. Exhala largo, en seis."},
+    {type:"choose", key:"despues", text:"¿Cómo queda el cuerpo ahora?",
+      opts:["más suelto","igual","más tenso","distinto, sin nombre"]},
+    {type:"huella", kind:"palabra"}
+  ]},
+9:{ titulo:"Coincidencias con peso", min:"2 min",
+  huellaPrompt:"La coincidencia.",
+  steps:[
+    UMBRAL,
+    {type:"say", text:"Recuerda una coincidencia. De estos días o de antes. Una que pesó más que una casualidad."},
+    {type:"input", long:true, key:"coinc", label:"la coincidencia", ph:"pensé en…, y entonces…",
+      text:"Escríbela tal como ocurrió.", note:"Sin interpretarla."},
+    {type:"say", text:"No le busques sentido todavía. Durante la semana puedes volver y sumar otras. Cada una será un punto, y los puntos se irán conectando."},
+    {type:"huella", kind:"coincidencia", prefill:"coinc"}
+  ]},
+10:{ titulo:"Lo que no tenía nombre", min:"3 min",
+  huellaPrompt:"Ese nombre.",
+  steps:[
+    UMBRAL,
+    {type:"say", text:"Piensa en una forma tuya de cuidar, de decidir o de percibir que no se mide en rendimiento. Nadie te la enseñó como método."},
+    {type:"input", long:true, key:"forma", label:"cómo es", ph:"cuando…, yo…", text:"Descríbela en pocas palabras."},
+    {type:"input", key:"nombre", label:"su nombre", ph:"una palabra tuya",
+      text:"Ahora dale un nombre propio.", note:"Una palabra que todavía no exista, o una que exista y quieras darle otro sentido."},
+    {type:"timer", secs:15, mode:"seed", text:c=>`Mira la pantalla. <em>${esc(c.nombre)}</em> queda guardado como una semilla.`},
+    {type:"huella", kind:"nombre", prefill:"nombre"}
   ]}
 };
+const T = (v,ctx) => typeof v==="function" ? v(ctx) : (v||"");
 
 /* ============ CIELO DE FONDO ============ */
 const sky = document.getElementById("sky"), sctx = sky.getContext("2d");
@@ -435,7 +505,7 @@ function viewHome(){
     </div>
     <div class="salas">
       ${SALAS.map(s=>{
-        const ok=salaAbierta(s.n), ids=POR_SALA[s.n], built=s.n===1, d1=(s.n-1)*7+1;
+        const ok=salaAbierta(s.n), ids=POR_SALA[s.n], built=ids.every(i=>PRACTICAS[i]), d1=(s.n-1)*7+1;
         return `<button class="sala ${ok?"open":""}" data-s="${s.n}" ${ok&&built?"":"disabled"}>
           <span class="s-num">0${s.n}</span>
           <span class="s-name">${s.nombre}
@@ -517,14 +587,40 @@ function viewIntro(id){
   app.innerHTML = header() + `
     <button class="link" id="back">← sala_0${n}</button>
     <h1><small>cápsula ${id} · ${p.min}</small>${p.titulo}</h1>
-    ${h?`<p class="voice">Tu huella: <em>${esc(h.texto)}</em></p><p class="mono" style="color:var(--muted)">dejada el ${fmt(new Date(h.fecha))}</p>`:
+    ${id===9&&h ? coincHTML(h) :
+      h?`<p class="voice">Tu huella: <em>${esc(h.texto)}</em></p><p class="mono" style="color:var(--muted)">dejada el ${fmt(new Date(h.fecha))}</p>`:
         `<p class="voice">Busca un lugar donde nadie te interrumpa por unos minutos.</p>${aviso}`}
     <div class="actions">
-      <button class="btn" id="go">${h?"hacerla de nuevo":"comenzar"}</button>
+      ${id===9&&h?`<button class="btn" id="mas">sumar una coincidencia</button>`:
+      `<button class="btn" id="go">${h?"hacerla de nuevo":"comenzar"}</button>`}
     </div>`;
   bindHeader();
   document.getElementById("back").onclick=()=>go("sala",n);
-  document.getElementById("go").onclick=()=>{ audioReady(); runPractice(id); };
+  const g=document.getElementById("go"); if(g) g.onclick=()=>{ audioReady(); runPractice(id); };
+  const m=document.getElementById("mas"); if(m) m.onclick=()=>go("sumar");
+  const cv=document.getElementById("dots"); if(cv) dotsViz(cv, h.extra.lista);
+}
+function coincHTML(h){
+  const L=(h.extra&&h.extra.lista)||[h.texto]; if(!h.extra) h.extra={}; h.extra.lista=L;
+  return `<p class="voice">${L.length===1?"Una coincidencia. Puedes sumar otras durante la semana.":`${L.length} coincidencias. Míralas juntas.`}</p>
+    <div class="viz" style="aspect-ratio:4/3"><canvas id="dots"></canvas></div>
+    <ol class="clist">${L.map(t=>`<li>${esc(t)}</li>`).join("")}</ol>`;
+}
+function viewSumar(){
+  app.innerHTML = header() + `
+    <button class="link" id="back">← coincidencias</button>
+    <h1><small>cápsula 9 · coincidencias</small>Otra coincidencia</h1>
+    <p class="voice">Escríbela tal como ocurrió.</p><p class="note">Sin interpretarla.</p>
+    <label class="f"><span>la coincidencia</span><textarea id="ci" rows="3" maxlength="120" placeholder="pensé en…, y entonces…"></textarea></label>
+    <div class="actions"><button class="btn" id="n" disabled>sumarla</button></div>`;
+  bindHeader();
+  document.getElementById("back").onclick=()=>go("intro",9);
+  const t=document.getElementById("ci"), b=document.getElementById("n");
+  t.oninput=()=>{b.disabled=!t.value.trim()}; t.focus();
+  b.onclick=()=>{
+    const h=DB.huellas[9]; h.extra=h.extra||{}; h.extra.lista=[...(h.extra.lista||[h.texto]), t.value.trim().replace(/\s*\n+\s*/g," ")].slice(-12);
+    saveHuella(9); chime(); go("intro",9);
+  };
 }
 
 /* ============ MOTOR DE PRÁCTICA ============ */
@@ -563,12 +659,12 @@ function runPractice(id){
   function step(){
     const s=p.steps[i];
     if(s.type==="say"){
-      shell(`<p class="voice">${s.text}</p>${s.note?`<p class="note">${s.note}</p>`:""}
+      shell(`<p class="voice">${T(s.text,ctx)}</p>${s.note?`<p class="note">${T(s.note,ctx)}</p>`:""}
         <div class="actions"><button class="btn" id="n">continuar</button></div>`);
       document.getElementById("n").onclick=next;
     }
     else if(s.type==="breath"){
-      shell(`<p class="voice">${s.text}</p><div class="viz"><canvas id="v"></canvas></div><div class="timer" id="ph">&nbsp;</div>
+      shell(`<p class="voice">${T(s.text,ctx)}</p><div class="viz"><canvas id="v"></canvas></div><div class="timer" id="ph">&nbsp;</div>
         <div class="actions"><button class="link" id="skip">saltar →</button></div>`);
       document.getElementById("skip").onclick=next;
       breathViz(document.getElementById("v"), document.getElementById("ph"), s.cycles, ()=>{chime(); next();});
@@ -582,23 +678,26 @@ function runPractice(id){
       countdown(s.secs, ()=>{ chime(true); next(); });
     }
     else if(s.type==="timer"){
-      shell(`<p class="voice">${s.text}</p><div class="viz"><canvas id="v"></canvas></div>
+      shell(`<p class="voice">${T(s.text,ctx)}</p><div class="viz"><canvas id="v"></canvas></div>
         <div class="bar"><span id="bar"></span></div><div class="timer" id="tm"></div>
         <div class="actions"><button class="link" id="skip">pasar →</button></div>`);
       document.getElementById("skip").onclick=next;
-      landscapeViz(document.getElementById("v"), ctx);
+      ({landscape:landscapeViz, spiral:spiralViz, seed:seedViz})[s.mode||"landscape"](document.getElementById("v"), ctx);
       const stopViz=stopLoop;
       countdown(s.secs, ()=>{ stopViz(); chime(true); next(); });
       const stopCd=stopLoop; stopLoop=()=>{stopViz(); stopCd();};
     }
     else if(s.type==="input"){
-      shell(`<p class="voice">${s.text}</p>
-        <label class="f"><span>${s.label}</span><input type="text" id="in-${s.key}" maxlength="80" placeholder="${s.ph||""}" value="${esc(ctx[s.key]||"")}"></label>
+      const fld = s.long
+        ? `<textarea id="in-${s.key}" rows="3" maxlength="200" placeholder="${s.ph||""}">${esc(ctx[s.key]||"")}</textarea>`
+        : `<input type="text" id="in-${s.key}" maxlength="80" placeholder="${s.ph||""}" value="${esc(ctx[s.key]||"")}">`;
+      shell(`<p class="voice">${T(s.text,ctx)}</p>${s.note?`<p class="note">${T(s.note,ctx)}</p>`:""}
+        <label class="f"><span>${s.label}</span>${fld}</label>
         <div class="actions"><button class="btn" id="n" disabled>continuar</button></div>`);
       const inp=document.getElementById("in-"+s.key), b=document.getElementById("n");
       const upd=()=>{b.disabled=!inp.value.trim()}; inp.oninput=upd; upd(); inp.focus();
-      inp.onkeydown=e=>{if(e.key==="Enter"&&!b.disabled) b.click()};
-      b.onclick=()=>{ctx[s.key]=inp.value.trim(); next();};
+      if(!s.long) inp.onkeydown=e=>{if(e.key==="Enter"&&!b.disabled) b.click()};
+      b.onclick=()=>{ctx[s.key]=inp.value.trim().replace(/\s*\n+\s*/g," "); next();};
     }
     else if(s.type==="cols"){
       shell(`${ctx.exp?`<p class="voice"><em>${esc(ctx.exp)}</em></p>`:""}
@@ -610,6 +709,26 @@ function runPractice(id){
       const a=document.getElementById("ca"), b2=document.getElementById("cb"), b=document.getElementById("n");
       const upd=()=>{b.disabled=!b2.value.trim()}; a.oninput=upd; b2.oninput=upd;
       b.onclick=()=>{ctx[s.a.key]=a.value.trim(); ctx[s.b.key]=b2.value.trim(); next();};
+    }
+    else if(s.type==="choose"){
+      shell(`<p class="voice">${T(s.text,ctx)}</p>${s.note?`<p class="note">${T(s.note,ctx)}</p>`:""}
+        <div class="opts" role="group">${s.opts.map(o=>`<button class="opt" data-o="${esc(o)}" aria-pressed="false">${esc(o)}</button>`).join("")}
+          ${s.otro?`<button class="opt" data-o="__otro" aria-pressed="false">otro</button>`:""}</div>
+        ${s.otro?`<label class="f" id="otrof" hidden><span>cuál</span><input type="text" id="otro" maxlength="40"></label>`:""}
+        <div class="actions"><button class="btn" id="n" disabled>continuar</button></div>`);
+      const bs=[...document.querySelectorAll(".opt")], b=document.getElementById("n"), of=document.getElementById("otrof"), oi=document.getElementById("otro");
+      const sel=()=>bs.filter(x=>x.getAttribute("aria-pressed")==="true").map(x=>x.dataset.o);
+      const upd=()=>{ const v=sel(), conOtro=v.includes("__otro"); if(of) of.hidden=!conOtro;
+        b.disabled=!v.length || (conOtro && !oi.value.trim()); };
+      bs.forEach(x=>x.onclick=()=>{
+        const on=x.getAttribute("aria-pressed")==="true";
+        if(!s.multi) bs.forEach(y=>y.setAttribute("aria-pressed","false"));
+        x.setAttribute("aria-pressed", on&&s.multi?"false":"true");
+        upd(); if(x.dataset.o==="__otro"&&oi&&!of.hidden) oi.focus();
+      });
+      if(oi) oi.oninput=upd;
+      b.onclick=()=>{ const v=sel().map(o=>o==="__otro"?oi.value.trim():o);
+        ctx[s.key]= v.length>1 ? v.slice(0,-1).join(", ")+" y "+v[v.length-1] : v[0]; next(); };
     }
     else if(s.type==="range"){
       shell(`<p class="voice">${s.text}</p>
@@ -626,7 +745,7 @@ function runPractice(id){
       b.onclick=()=>{ dots[k].classList.add("lit"); k++; if(k>=s.n){ b.disabled=true; setTimeout(next,1100);} };
     }
     else if(s.type==="huella"){
-      const pre = s.prefill ? (ctx[s.prefill]||"").split("\n")[0].slice(0,120) : "";
+      const pre = s.prefill ? String(typeof s.prefill==="function" ? s.prefill(ctx) : (ctx[s.prefill]||"")).split("\n")[0].slice(0,120) : "";
       shell(`<p class="voice">${p.huellaPrompt}</p>
         <label class="f"><span>tu huella · ${s.kind}</span><input type="text" id="hu" maxlength="120" value="${esc(pre)}"></label>
         <div class="actions"><button class="btn" id="n" disabled>dejar huella</button></div>`);
@@ -634,7 +753,8 @@ function runPractice(id){
       const upd=()=>{b.disabled=!inp.value.trim()}; inp.oninput=upd; upd(); inp.focus();
       inp.onkeydown=e=>{if(e.key==="Enter"&&!b.disabled) b.click()};
       b.onclick=()=>{
-        DB.huellas[id]={texto:inp.value.trim(), fecha:new Date().toISOString(), extra:ctx};
+        if(id===9){ const prev=(DB.huellas[9]?.extra?.lista)||[]; ctx.lista=[...prev, inp.value.trim()].slice(-12); }
+        DB.huellas[id]={texto:(id===9&&DB.huellas[9]?.texto)||inp.value.trim(), fecha:DB.huellas[id]?.fecha||new Date().toISOString(), extra:ctx};
         saveHuella(id); chime(); holdScreen(false);
         const sig = POR_SALA[salaDe(id)].find(x=>x>id && !lit(x));
         const cierre = sig && !practicaAbierta(sig) ? `La práctica ${pad(sig)} se abre con la cápsula ${sig}, el ${fmt(fechaDia(diaDe(sig)))}.` : "";
@@ -715,6 +835,95 @@ function landscapeViz(cv, ctx){
   stopLoop=()=>{alive=false};
 }
 
+/* colores comunes de las visualizaciones */
+function cols(){ const css=getComputedStyle(document.documentElement);
+  return {teal:css.getPropertyValue("--teal").trim(), lav:css.getPropertyValue("--lav").trim(), dim:css.getPropertyValue("--dim").trim(), muted:css.getPropertyValue("--muted").trim()}; }
+function fitCanvas(cv){ const dpr=Math.min(2,devicePixelRatio||1); cv.width=cv.clientWidth*dpr; cv.height=cv.clientHeight*dpr; return dpr; }
+const corto=(t,n)=>{ t=String(t||""); return t.length>n?t.slice(0,n-1)+"…":t; };
+
+/* práctica 7: tres episodios en tres vueltas de una espiral, alineados en el mismo radio */
+function spiralViz(cv, ctx){
+  const c=cv.getContext("2d"), dpr=fitCanvas(cv), K=cols();
+  const t0=performance.now(); let alive=true;
+  const PHI=-Math.PI/2, TH=[PHI+2*Math.PI, PHI+4*Math.PI, PHI+6*Math.PI], TMAX=PHI+6.35*Math.PI, T0=PHI+0.6*Math.PI;
+  function f(now){
+    if(!alive) return; requestAnimationFrame(f);
+    const el=(now-t0)/1000, m=Math.min(1,el/7), e=.5-.5*Math.cos(Math.PI*m);
+    const W=cv.width,H=cv.height, cx=W/2, cy=H*.54, R=Math.min(W,H)*.42, b=R/TMAX;
+    const P=th=>[cx+b*th*Math.cos(th), cy+b*th*Math.sin(th)];
+    c.clearRect(0,0,W,H);
+    const lim=T0+(TMAX-T0)*e;
+    c.strokeStyle=K.lav; c.globalAlpha=.55; c.lineWidth=1.2*dpr; c.beginPath();
+    for(let th=T0; th<=lim; th+=.04){ const [x,y]=P(th); th===T0?c.moveTo(x,y):c.lineTo(x,y); } c.stroke();
+    // el radio común: aparece cuando la espiral se completa
+    const r2=Math.max(0,Math.min(1,(el-7)/3));
+    if(r2>0){ const [x3,y3]=P(TH[2]); c.setLineDash([3*dpr,5*dpr]); c.strokeStyle=K.teal; c.globalAlpha=.6*r2;
+      c.beginPath(); c.moveTo(cx,cy); c.lineTo(x3,y3-14*dpr); c.stroke(); c.setLineDash([]); }
+    ["ep1","ep2","ep3"].forEach((k,i)=>{
+      if(lim<TH[i]) return;
+      const [x,y]=P(TH[i]), pulse=Math.max(1,(8+2.5*Math.sin(el*1.5+i))*dpr);
+      const g=c.createRadialGradient(x,y,0,x,y,pulse*3); g.addColorStop(0,K.teal); g.addColorStop(1,"rgba(0,0,0,0)");
+      c.globalAlpha=.7; c.fillStyle=g; c.beginPath(); c.arc(x,y,pulse*3,0,7); c.fill();
+      c.globalAlpha=1; c.fillStyle=K.teal; c.beginPath(); c.arc(x,y,3.5*dpr,0,7); c.fill();
+      c.fillStyle=K.lav; c.font=`italic ${12.5*dpr}px Spectral,Georgia,serif`; c.textAlign="left"; c.textBaseline="middle";
+      c.fillText(corto(ctx[k],26), x+14*dpr, y);
+    });
+    c.globalAlpha=1;
+  }
+  requestAnimationFrame(f); stopLoop=()=>{alive=false};
+}
+
+/* práctica 10: el nombre guardado como semilla, con raíces que crecen */
+function seedViz(cv, ctx){
+  const c=cv.getContext("2d"), dpr=fitCanvas(cv), K=cols();
+  const t0=performance.now(); let alive=true;
+  const roots=Array.from({length:7},(_,i)=>({a:Math.PI/2+(i-3)*.32+(Math.random()-.5)*.15, w:Math.random()*2+1, l:.55+Math.random()*.45}));
+  function f(now){
+    if(!alive) return; requestAnimationFrame(f);
+    const el=(now-t0)/1000, m=Math.min(1,el/10), e=.5-.5*Math.cos(Math.PI*m);
+    const W=cv.width,H=cv.height, cx=W/2, cy=H*.42, L=Math.min(W,H)*.42;
+    c.clearRect(0,0,W,H);
+    c.strokeStyle=K.dim; c.globalAlpha=.5; c.lineWidth=1*dpr; c.beginPath(); c.moveTo(W*.08,cy); c.lineTo(W*.92,cy); c.stroke();
+    roots.forEach((r,i)=>{
+      const len=L*r.l*e; c.strokeStyle=K.lav; c.globalAlpha=.55; c.lineWidth=1*dpr; c.beginPath(); c.moveTo(cx,cy);
+      for(let s=0;s<=1.0001;s+=.05){ const d=len*s, w=Math.sin(s*Math.PI*r.w+el*.4)*6*dpr*s;
+        c.lineTo(cx+Math.cos(r.a)*d - Math.sin(r.a)*w, cy+Math.sin(r.a)*d + Math.cos(r.a)*w); }
+      c.stroke();
+    });
+    const pulse=Math.max(1,(10+3*Math.sin(el*1.4))*dpr);
+    const g=c.createRadialGradient(cx,cy,0,cx,cy,pulse*4); g.addColorStop(0,K.teal); g.addColorStop(1,"rgba(0,0,0,0)");
+    c.globalAlpha=.75; c.fillStyle=g; c.beginPath(); c.arc(cx,cy,pulse*4,0,7); c.fill();
+    c.globalAlpha=1; c.fillStyle=K.teal; c.beginPath(); c.ellipse(cx,cy,5*dpr,7*dpr,0,0,7); c.fill();
+    c.fillStyle=K.teal; c.font=`italic ${20*dpr}px Spectral,Georgia,serif`; c.textAlign="center"; c.textBaseline="alphabetic";
+    c.globalAlpha=Math.min(1,el/2); c.fillText(corto(ctx.nombre,24), cx, cy-pulse*4-10*dpr); c.globalAlpha=1;
+  }
+  requestAnimationFrame(f); stopLoop=()=>{alive=false};
+}
+
+/* práctica 9: las coincidencias como puntos conectados */
+function dotsViz(cv, lista){
+  const c=cv.getContext("2d"), dpr=fitCanvas(cv), K=cols(); const n=lista.length;
+  let alive=true;
+  function f(t){
+    if(!alive) return; requestAnimationFrame(f);
+    const W=cv.width,H=cv.height, cx=W/2, cy=H/2, R=Math.min(W,H)*.38;
+    const P=lista.map((_,i)=>{ const a=i*2.39996-Math.PI/2, r=n===1?0:R*Math.sqrt((i+.6)/(n)); return [cx+r*Math.cos(a)*1.25, cy+r*Math.sin(a)]; });
+    c.clearRect(0,0,W,H);
+    c.strokeStyle=K.lav; c.lineWidth=1*dpr; c.globalAlpha=.5;
+    for(let i=1;i<n;i++){ c.beginPath(); c.moveTo(...P[i-1]); c.lineTo(...P[i]); c.stroke(); }
+    if(n>2){ c.globalAlpha=.2; c.beginPath(); c.moveTo(...P[n-1]); c.lineTo(...P[0]); c.stroke(); }
+    P.forEach(([x,y],i)=>{
+      const R2=Math.max(1,(12+3*Math.sin(t/900+i))*dpr);
+      const g=c.createRadialGradient(x,y,0,x,y,R2*2); g.addColorStop(0,K.teal); g.addColorStop(1,"rgba(0,0,0,0)");
+      c.globalAlpha=.6; c.fillStyle=g; c.beginPath(); c.arc(x,y,R2*2,0,7); c.fill();
+      c.globalAlpha=1; c.fillStyle=K.teal; c.beginPath(); c.arc(x,y,3.5*dpr,0,7); c.fill();
+      c.fillStyle=K.muted; c.font=`${10*dpr}px "Victor Mono",monospace`; c.textAlign="center"; c.fillText(pad(i+1),x,y+18*dpr);
+    });
+    c.globalAlpha=1;
+  }
+  requestAnimationFrame(f); stopLoop=()=>{alive=false};
+}
+
 /* ============ MIS HUELLAS ============ */
 function viewBackup(){
   const ids=Object.keys(DB.huellas).map(Number).sort((x,y)=>x-y);
@@ -759,6 +968,7 @@ function go(v,arg){
   else if(v==="sala") viewSala(arg);
   else if(v==="intro") viewIntro(arg);
   else if(v==="backup") viewBackup();
+  else if(v==="sumar") viewSumar();
 }
 if(!IN_TG && !PREVIEW){ viewSoloTelegram(); }
 else { app.innerHTML=`<p class="mono" style="color:var(--muted);margin-top:40vh;text-align:center">abriendo tu cielo…</p>`; loadAll().then(()=>go("home")); }
