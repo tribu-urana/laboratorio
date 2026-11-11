@@ -119,6 +119,42 @@ input[type=text]:focus,textarea:focus{outline:none;border-color:var(--lav)}
 .range .ends{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
 input[type=range]{width:100%;accent-color:var(--teal)}
 
+.holdwrap{display:flex;justify-content:center;padding:18px 0}
+.holdbtn{position:relative;overflow:hidden;font-family:var(--mono);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--teal);background:transparent;border:1px solid var(--teal);border-radius:999px;padding:26px 34px;min-width:240px;cursor:pointer;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.holdbtn span{position:relative;z-index:1}
+.holdbtn i{position:absolute;inset:0;background:color-mix(in srgb,var(--teal) 22%,transparent);transform:scaleX(0);transform-origin:left}
+/* mapa final */
+.hz{display:flex;flex-direction:column;gap:14px;border-top:1px solid var(--line);padding-top:18px}
+.hz-h{display:flex;gap:12px;align-items:baseline}
+.hz-k{font-family:var(--mono);font-size:12px;letter-spacing:.14em;color:var(--teal)}
+.hz-k.h1{color:var(--muted)}.hz-k.h2{color:var(--lav)}
+.hz-t{font-family:var(--mono);font-size:13px;letter-spacing:.1em;text-transform:uppercase}
+.hz-q{font-style:italic;font-weight:300;color:var(--muted);margin:4px 0 0}
+.hz-i{display:grid;grid-template-columns:84px 1fr;gap:10px;align-items:baseline}
+.hz-i .n{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;color:var(--muted);text-transform:uppercase}
+.hz-i .t{font-size:18px;line-height:1.4;overflow-wrap:anywhere}
+.hz-i .t small{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--dim);text-transform:uppercase}
+.hz-i.semilla .t{color:var(--teal)}
+.hz-i input{font-size:17px;padding:9px 11px}
+.meta{border-left:1px solid var(--lav);padding:4px 0 4px 14px}
+.meta span{display:block;font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.meta p{margin:4px 0 0;font-style:italic;font-size:19px;color:var(--lav)}
+.mapcv{width:100%;display:block}
+.acard{border:1px solid var(--line);padding:16px 18px;display:flex;flex-direction:column;gap:10px;background:color-mix(in srgb,var(--surface) 70%,transparent)}
+.acard .an{font-family:var(--mono);font-size:12px;letter-spacing:.12em;color:var(--teal)}
+.acard .ap{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;color:var(--muted);text-transform:uppercase}
+.acard .ad{font-size:16.5px;line-height:1.55;margin:0}
+.acard .ah{font-size:16.5px;line-height:1.55;margin:0;border-left:1px solid var(--teal);padding-left:12px}
+.acard .badge{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;color:var(--bg);background:var(--teal);padding:3px 8px;align-self:flex-start;text-transform:uppercase}
+.acard .badge.q{background:var(--lav)}
+.acard ul{margin:0;padding-left:18px;font-family:var(--mono);font-size:12px;line-height:1.7;color:var(--fg)}
+.form2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+input[type=date],input[type=time]{font-family:var(--voice);font-size:18px;color:var(--fg);background:var(--surface);border:1px solid var(--line);border-radius:2px;padding:10px 12px;width:100%;box-sizing:border-box;color-scheme:dark}
+.citylist{display:flex;flex-direction:column;border:1px solid var(--line);border-top:0;max-height:240px;overflow:auto}
+.citylist button{font:inherit;font-size:17px;text-align:left;background:var(--surface);color:var(--fg);border:0;border-bottom:1px solid var(--line);padding:10px 12px;cursor:pointer}
+.citylist button:hover,.citylist button:focus-visible{color:var(--teal);outline:none}
+.err{font-family:var(--mono);font-size:12.5px;color:#f0a5a5;margin:0}
+.cierre{text-align:center;font-style:italic;max-width:none}
 .opts{display:flex;flex-wrap:wrap;gap:10px}
 .opt{font-family:var(--voice);font-size:18px;padding:9px 16px;border:1px solid var(--line);background:transparent;color:var(--fg);border-radius:999px;cursor:pointer}
 .opt:hover,.opt:focus-visible{border-color:var(--lav);outline:none}
@@ -189,8 +225,9 @@ const CS = IN_TG && TG.CloudStorage;
 
 /* ============ ALMACENAMIENTO ============ */
 const KEY = "tribu_urana_lab_v1";
-let DB = {huellas:{}};
-function localLoad(){ try{ return JSON.parse(localStorage.getItem(KEY)) || {huellas:{}} }catch(e){ return {huellas:{}} } }
+let DB = {huellas:{}, mapa:{}, astro:null};
+function localLoad(){ let d=null; try{ d=JSON.parse(localStorage.getItem(KEY)) }catch(e){}
+  d=d||{}; return {huellas:d.huellas||{}, mapa:d.mapa||{}, astro:d.astro||null}; }
 function localSave(){ try{ localStorage.setItem(KEY, JSON.stringify(DB)) }catch(e){} }
 const hkey = id => "h"+id;
 function packHuella(h){
@@ -202,12 +239,14 @@ function loadAll(){
   return new Promise(res=>{
     DB = localLoad();
     if(!CS) return res();
-    const keys = Array.from({length:20},(_,k)=>hkey(k+1));
+    const keys = Array.from({length:20},(_,k)=>hkey(k+1)).concat(["mapa","astro"]);
     try{
       CS.getItems(keys,(err,vals)=>{
         if(!err && vals){
           const nube={};
-          for(const k of keys){ if(vals[k]){ try{ nube[+k.slice(1)]=JSON.parse(vals[k]) }catch(e){} } }
+          for(const k of keys){ if(vals[k] && k[0]==="h"){ try{ nube[+k.slice(1)]=JSON.parse(vals[k]) }catch(e){} } }
+          try{ if(vals.mapa) DB.mapa=JSON.parse(vals.mapa); else if(Object.keys(DB.mapa).length) CS.setItem("mapa",JSON.stringify(DB.mapa)); }catch(e){}
+          try{ if(vals.astro) DB.astro=JSON.parse(vals.astro); else if(DB.astro) CS.setItem("astro",JSON.stringify(DB.astro)); }catch(e){}
           // lo que esté en el navegador y no en la nube se sube (por si se dejó una huella sin conexión)
           for(const id in DB.huellas){ if(!nube[id]){ nube[id]=DB.huellas[id]; try{ CS.setItem(hkey(id), packHuella(DB.huellas[id])) }catch(e){} } }
           DB.huellas = nube; localSave();
@@ -221,9 +260,12 @@ function saveHuella(id){
   localSave();
   if(CS){ try{ CS.setItem(hkey(id), packHuella(DB.huellas[id])) }catch(e){} }
 }
+function saveMapa(){ localSave(); if(CS){ try{ CS.setItem("mapa", JSON.stringify(DB.mapa)) }catch(e){} } }
+function saveAstro(){ localSave(); if(CS){ try{ DB.astro ? CS.setItem("astro", JSON.stringify(DB.astro)) : CS.removeItem("astro") }catch(e){} } }
 function wipeAll(){
-  DB={huellas:{}}; localSave();
-  if(CS){ try{ CS.removeItems(Array.from({length:20},(_,k)=>hkey(k+1))) }catch(e){} }
+  DB={huellas:{}, mapa:{}, astro:null}; localSave();
+  try{ localStorage.removeItem("tu_nac") }catch(e){}
+  if(CS){ try{ CS.removeItems(Array.from({length:20},(_,k)=>hkey(k+1)).concat(["mapa","astro"])) }catch(e){} }
 }
 
 /* ============ SONIDO ============ */
@@ -409,8 +451,135 @@ const PRACTICAS = {
       text:"Ahora dale un nombre propio.", note:"Una palabra que todavía no exista, o una que exista y quieras darle otro sentido."},
     {type:"timer", secs:15, mode:"seed", text:c=>`Mira la pantalla. <em>${esc(c.nombre)}</em> queda guardado como una semilla.`},
     {type:"huella", kind:"nombre", prefill:"nombre"}
+  ]},
+
+/* ============ PRÁCTICAS · SALA 3 ============ */
+11:{ titulo:"La predicción sobre ti", min:"4 min",
+  huellaPrompt:"La frase reescrita.",
+  steps:[
+    UMBRAL,
+    {type:"input", key:"frase", label:"lo que crees fijo", ph:"soy impaciente, no sé pedir ayuda…",
+      text:"Elige algo que crees fijo en ti. Algo que dirías empezando con «soy así»."},
+    {type:"say", text:c=>`Ahora léelo así:<br><em>mi sistema predice que ${esc(minus(c.frase))}</em>.`,
+      note:"No es lo que eres. Es lo que tu sistema espera de ti."},
+    {type:"input", key:"desde", label:"desde cuándo", ph:"desde que…", text:"¿Desde cuándo lo predice?"},
+    {type:"input", key:"quien", label:"quién o qué", ph:"una voz, una escena, una costumbre…", text:"¿Quién o qué lo instaló?"},
+    {type:"choose", key:"util", text:"¿Sigue siendo útil?", opts:["sí","a veces","ya no"]},
+    {type:"input", long:true, key:"nueva", label:"la predicción abierta", ph:"mi sistema puede empezar a predecir que…",
+      text:"Reescríbelo como una predicción abierta.", note:"Algo que tu sistema todavía podría aprender a esperar."},
+    {type:"huella", kind:"frase", prefill:"nueva"}
+  ]},
+12:{ titulo:"La mano en el pecho", min:"3 min",
+  huellaPrompt:"La sensación.",
+  steps:[
+    UMBRAL,
+    {type:"say", text:"Pon una mano en el pecho. La otra puede descansar.", note:"En los próximos pasos puedes cerrar los ojos. Un sonido te avisa."},
+    {type:"look", secs:25, dark:true, cmd:"Mano en el pecho.", sub:"Registra lo que hay. Sin interpretar."},
+    {type:"look", secs:20, dark:true, cmd:"Sigue ahí.", sub:"Si aparece una explicación, déjala pasar."},
+    {type:"choose", key:"sens", otro:true, text:"¿Qué había?",
+      opts:["tensión","expansión","frío","calor","vibración","vacío","sin nombre"]},
+    {type:"input", key:"palabra", optional:true, label:"tu palabra · opcional", ph:"", text:"Si quieres, agrega una palabra tuya."},
+    {type:"huella", kind:"sensación", prefill:c=>c.palabra?`${c.sens}: ${c.palabra}`:c.sens}
+  ]},
+13:{ titulo:"Lo que viene del linaje", min:"4 min",
+  huellaPrompt:"Lo que eliges llevar.",
+  steps:[
+    UMBRAL,
+    {type:"input", long:true, key:"patron", label:"el patrón", ph:"en mi familia…",
+      text:"¿Qué patrón tuyo reconoces en tu linaje?", note:"Algo que no elegiste."},
+    {type:"cols", text:c=>`<em>${esc(c.patron)}</em>`, a:{key:"llevar", label:"Lo que llevarías"}, b:{key:"soltar", label:"Lo que soltarías"}, req:"both"},
+    {type:"hold", secs:6, text:"Para soltar: mantén presionado el botón durante una exhalación larga.", show:"soltar"},
+    {type:"say", text:"Lo que sueltas queda aquí. Lo que llevas, va contigo."},
+    {type:"huella", kind:"frase", prefill:"llevar"}
+  ]},
+14:{ titulo:"La pausa", min:"4 min",
+  huellaPrompt:"Lo que encontraste en el espacio.",
+  steps:[
+    UMBRAL,
+    {type:"say", text:"Vas a practicar tres veces el espacio que hay antes de una respuesta automática."},
+    {type:"input", key:"r1", label:"la reacción", ph:"cuando…, yo…", text:"Evoca una reacción habitual. Algo que haces sin pensar."},
+    {type:"exhale", secs:8, text:c=>`<em>${esc(c.r1)}</em>. Justo antes: detente. Exhala largo.`},
+    {type:"input", key:"e1", label:"lo que hay", ph:"en el cuerpo, en la mente…", text:"¿Qué hay en ese espacio?"},
+    {type:"input", key:"r2", label:"la reacción", ph:"cuando…, yo…", text:"Otra reacción. O la misma, otra vez."},
+    {type:"exhale", secs:8, text:c=>`<em>${esc(c.r2)}</em>. Detente. Exhala largo.`},
+    {type:"input", key:"e2", label:"lo que hay", ph:"en el cuerpo, en la mente…", text:"¿Qué hay en ese espacio ahora?"},
+    {type:"input", key:"r3", label:"la reacción", ph:"cuando…, yo…", text:"Una última."},
+    {type:"exhale", secs:8, text:c=>`<em>${esc(c.r3)}</em>. Detente. Exhala largo.`},
+    {type:"input", key:"e3", label:"lo que hay", ph:"en el cuerpo, en la mente…", text:"¿Qué hay en el espacio?"},
+    {type:"say", text:"La versión breve, para el resto del día: detente, exhala, nombra lo que hay. Diez segundos."},
+    {type:"look", secs:10, cmd:"Detente. Exhala. Nombra.", sub:"Pruébala ahora."},
+    {type:"huella", kind:"frase", prefill:"e3"}
+  ]},
+15:{ titulo:"Lo que ya terminó", min:"3 min",
+  huellaPrompt:"El nombre de lo que terminó.",
+  steps:[
+    UMBRAL,
+    {type:"say", text:"No lo que quieres cambiar. Lo que ya terminó."},
+    {type:"input", long:true, key:"termino", label:"lo que terminó", ph:"la que…", text:"¿Qué versión de ti está lista para irse?"},
+    {type:"timer", secs:25, mode:"dissolve", text:"Respira. Mira cómo se deshace."},
+    {type:"say", text:()=>`El ${fmt(fechaDia(21))} es el ritual de la persona que no regresa. Lleva esto contigo hasta ahí.`},
+    {type:"huella", kind:"nombre"}
+  ]},
+
+/* ============ PRÁCTICAS · SALA 4 ============ */
+16:{ titulo:"Desde dónde operas", min:"3 min",
+  huellaPrompt:"Eso que no está en venta.",
+  steps:[
+    UMBRAL,
+    {type:"choose", key:"entorno", otro:true, text:"Elige un entorno digital donde pasas tiempo.",
+      opts:["redes sociales","mensajería","correo","trabajo en pantalla","videos y series","noticias"]},
+    {type:"range", key:"ancla", left:"elijo desde adentro", right:"el entorno me conforma", text:c=>`En ${esc(c.entorno)}, ¿dónde estás hoy?`},
+    {type:"input", key:"venta", label:"lo que no está en venta", ph:"mi atención cuando…",
+      text:c=>`Nombra una cosa tuya que en ${esc(c.entorno)} no está en venta.`},
+    {type:"huella", kind:"frase", prefill:"venta"}
+  ]},
+17:{ titulo:"Postura ante otra inteligencia", min:"3 min",
+  huellaPrompt:"La postura que eliges.",
+  steps:[
+    UMBRAL,
+    {type:"choose", key:"postura", text:"Frente a una inteligencia artificial, ¿cómo te posicionas?",
+      opts:["herramienta","diálogo","algo entre ambas","todavía no lo sé"]},
+    {type:"say", text:"Ahora, otra inteligencia. Busca un ser no humano cerca: una planta, un animal, el cielo.", note:"Mira eso, no la pantalla. Un sonido te avisa."},
+    {type:"look", secs:25, cmd:"Míralo.", sub:"Sin nombrarlo. Sin ponerle lo tuyo."},
+    {type:"say", text:"Quédate un momento con eso."},
+    {type:"huella", kind:"postura", prefill:"postura"}
+  ]},
+18:{ titulo:"Tu lugar en el cosmos", min:"3 min",
+  huellaPrompt:"Eso que se movió.",
+  steps:[
+    UMBRAL,
+    {type:"choose", key:"donde", text:"¿Puedes ver el cielo ahora?", opts:["sí, lo miro","no, uso la imagen"]},
+    {type:"look", secs:25, when:c=>c.donde==="sí, lo miro", cmd:"Mira el cielo.", sub:"Deja que la pregunta se haga sola."},
+    {type:"timer", secs:25, mode:"sky", when:c=>c.donde!=="sí, lo miro", text:"Mira el cielo de la pantalla. Deja que la pregunta se haga sola."},
+    {type:"look", secs:15, cmd:"¿Qué cambia en tu lugar en el cosmos?", sub:"Si no somos la única inteligencia, ni la primera. No respondas."},
+    {type:"choose", key:"mov", otro:true, text:"¿Qué se movió?", opts:["asombro","vértigo","calma","extrañeza","nada todavía"]},
+    {type:"huella", kind:"palabra", prefill:"mov"}
+  ]},
+19:{ titulo:"La acción mínima", min:"3 min",
+  huellaPrompt:"La acción mínima.",
+  steps:[
+    {type:"input", long:true, key:"poster", label:"lo que postergas", ph:"hace tiempo que…",
+      text:"Nombra algo que postergas porque no sabes cómo va a salir."},
+    {type:"breath", cycles:2, text:"Antes de decidir nada, dos respiraciones. Desde la presencia, no desde la urgencia."},
+    {type:"input", key:"paso", label:"la acción mínima", ph:"escribir, llamar, preguntar…",
+      text:"¿Cuál es el paso más pequeño posible?", note:"Tan pequeño que se pueda dar hoy o mañana."},
+    {type:"input", key:"fecha", kind:"date", optional:true, label:"fecha · opcional", text:"Si quieres, ponle fecha."},
+    {type:"huella", kind:"acción", prefill:c=>c.fecha?`${c.paso} · ${fmt(new Date(c.fecha+"T12:00:00"))}`:c.paso}
+  ]},
+20:{ titulo:"Tres horizontes", min:"4 min",
+  huellaPrompt:"Las tres líneas.",
+  steps:[
+    UMBRAL,
+    {type:"say", text:"Tres curvas. Una por horizonte. Una línea para cada una."},
+    {type:"input", key:"h1", label:"horizonte 1 · lo que muere", ph:"lo que ya no se sostiene…", text:"¿Qué está muriendo en ti?"},
+    {type:"input", key:"h2", label:"horizonte 2 · lo que ensayas", ph:"lo que estás probando…", text:"¿Qué estás ensayando?"},
+    {type:"input", key:"h3", label:"horizonte 3 · la visión", ph:"lo que te orienta…", text:"¿Qué visión lo orienta?"},
+    {type:"timer", secs:20, mode:"horizons", text:"Mira la pantalla. Los tres horizontes, a la vez."},
+    {type:"input", long:true, key:"sabe", label:"lo que sabe", ph:"ahora sabe que…", text:"¿Qué sabe ahora quien eras el día 1?"},
+    {type:"huella", kind:"las tres líneas", max:240, prefill:c=>`${c.h1} · ${c.h2} · ${c.h3}`}
   ]}
 };
+const minus = s => { s=String(s||"").trim(); return s.charAt(0).toLowerCase()+s.slice(1); };
 const T = (v,ctx) => typeof v==="function" ? v(ctx) : (v||"");
 
 /* ============ CIELO DE FONDO ============ */
@@ -441,7 +610,7 @@ const pad = n => String(n).padStart(2,"0");
 
 function header(){
   return `<header>
-    <div class="mono brand"><b>TRIBU_URANA</b> · LABORATORIO_DE_REINICIO_ONTOLÓGICO</div>
+    <div class="mono brand"><b>ASTROLABIO</b> · TRIBU_URANA · LABORATORIO_DE_REINICIO_ONTOLÓGICO</div>
     <button class="chip" id="bk">mis huellas</button>
   </header>
   ${PREVIEW?`<div class="notice"><span>vista previa · simular</span>
@@ -492,6 +661,8 @@ function viewHome(){
   if(hoyEsPausa()) hoyTxt=`Hoy no hay laboratorio. Descansa: se retoma el ${fmt(fechaDia(d+1))}.`;
   else if(d<1) hoyTxt=`El laboratorio comienza el ${fmt(fechaDia(1))}.`;
   else if(d>28) hoyTxt=`El laboratorio terminó. Tus huellas siguen aquí.`;
+  else if(d===27) hoyTxt=`Hoy se abre <em>tu mapa</em>: tus veinte huellas en tres horizontes.`;
+  else if(d===28) hoyTxt=`Día 28. Después del ritual, escribe tu nombre nuevo en <em>tu mapa</em> y descárgalo.`;
   else if(hoyId) hoyTxt=`Hoy toca la cápsula ${hoyId}. Después de verla, haz su práctica: <em>${PRACTICAS[hoyId]?.titulo||"en construcción"}</em>.`;
   else hoyTxt=`Hoy no hay cápsula. Es ${(d-1)%7===5?"día de bitácora":"día de ritual"}, en Hotmart.`;
   app.innerHTML = header() + `
@@ -512,10 +683,17 @@ function viewHome(){
             <span class="s-meta">${!ok?`se abre el ${fmt(fechaDia(d1))}`:built?`cápsulas ${(s.n-1)*5+1} a ${s.n*5}`:"en construcción"}</span></span>
           <span class="stars">${ids.map(i=>`<i class="${lit(i)?"lit":""}"></i>`).join("")}</span>
         </button>`}).join("")}
+      <button class="sala ${d>=27?"open":""}" id="mp" ${d>=27?"":"disabled"}>
+        <span class="s-num">✦</span>
+        <span class="s-name">Tu mapa
+          <span class="s-meta">${d<27?`se abre el ${fmt(fechaDia(27))}`:DB.mapa.nombre?"versión 1 lista":"días 27 y 28"}</span></span>
+        <span></span>
+      </button>
     </div>
     <footer><span>${IN_TG?"tus huellas viajan con tu cuenta de telegram":"vista previa · huellas en este navegador"}</span><span>solo tú las ves</span></footer>`;
   bindHeader();
-  app.querySelectorAll(".sala:not(:disabled)").forEach(b=>b.onclick=()=>go("sala",+b.dataset.s));
+  app.querySelectorAll(".sala[data-s]:not(:disabled)").forEach(b=>b.onclick=()=>go("sala",+b.dataset.s));
+  const mp=document.getElementById("mp"); if(mp&&!mp.disabled) mp.onclick=()=>go("mapa");
 }
 
 function viewSala(n){
@@ -629,7 +807,9 @@ function runPractice(id){
   let i=0;
   CURRENT=["intro",id];
   holdScreen(true);
-  const next=()=>{ clearLoop(); document.body.classList.remove("dimmed"); i++; if(i<p.steps.length) step(); };
+  const next=()=>{ clearLoop(); document.body.classList.remove("dimmed"); i++;
+    while(i<p.steps.length && p.steps[i].when && !p.steps[i].when(ctx)) i++;
+    if(i<p.steps.length) step(); };
   function shell(inner){
     app.innerHTML = `
       <div class="stage">
@@ -682,7 +862,7 @@ function runPractice(id){
         <div class="bar"><span id="bar"></span></div><div class="timer" id="tm"></div>
         <div class="actions"><button class="link" id="skip">pasar →</button></div>`);
       document.getElementById("skip").onclick=next;
-      ({landscape:landscapeViz, spiral:spiralViz, seed:seedViz})[s.mode||"landscape"](document.getElementById("v"), ctx);
+      ({landscape:landscapeViz, spiral:spiralViz, seed:seedViz, dissolve:dissolveViz, sky:skyViz, horizons:horizonsViz})[s.mode||"landscape"](document.getElementById("v"), ctx);
       const stopViz=stopLoop;
       countdown(s.secs, ()=>{ stopViz(); chime(true); next(); });
       const stopCd=stopLoop; stopLoop=()=>{stopViz(); stopCd();};
@@ -690,25 +870,54 @@ function runPractice(id){
     else if(s.type==="input"){
       const fld = s.long
         ? `<textarea id="in-${s.key}" rows="3" maxlength="200" placeholder="${s.ph||""}">${esc(ctx[s.key]||"")}</textarea>`
+        : s.kind==="date" ? `<input type="date" id="in-${s.key}" value="${esc(ctx[s.key]||"")}">`
         : `<input type="text" id="in-${s.key}" maxlength="80" placeholder="${s.ph||""}" value="${esc(ctx[s.key]||"")}">`;
       shell(`<p class="voice">${T(s.text,ctx)}</p>${s.note?`<p class="note">${T(s.note,ctx)}</p>`:""}
         <label class="f"><span>${s.label}</span>${fld}</label>
         <div class="actions"><button class="btn" id="n" disabled>continuar</button></div>`);
       const inp=document.getElementById("in-"+s.key), b=document.getElementById("n");
-      const upd=()=>{b.disabled=!inp.value.trim()}; inp.oninput=upd; upd(); inp.focus();
+      const upd=()=>{b.disabled=!s.optional && !inp.value.trim()}; inp.oninput=upd; inp.onchange=upd; upd(); if(s.kind!=="date") inp.focus();
       if(!s.long) inp.onkeydown=e=>{if(e.key==="Enter"&&!b.disabled) b.click()};
       b.onclick=()=>{ctx[s.key]=inp.value.trim().replace(/\s*\n+\s*/g," "); next();};
     }
     else if(s.type==="cols"){
-      shell(`${ctx.exp?`<p class="voice"><em>${esc(ctx.exp)}</em></p>`:""}
+      shell(`${s.text?`<p class="voice">${T(s.text,ctx)}</p>`:ctx.exp?`<p class="voice"><em>${esc(ctx.exp)}</em></p>`:""}
         <div class="cols">
           <label class="f"><span>${s.a.label}</span><textarea id="ca" rows="4"></textarea></label>
           <label class="f"><span>${s.b.label}</span><textarea id="cb" rows="4"></textarea></label>
         </div>
         <div class="actions"><button class="btn" id="n" disabled>continuar</button></div>`);
       const a=document.getElementById("ca"), b2=document.getElementById("cb"), b=document.getElementById("n");
-      const upd=()=>{b.disabled=!b2.value.trim()}; a.oninput=upd; b2.oninput=upd;
+      const upd=()=>{b.disabled=!b2.value.trim() || (s.req==="both" && !a.value.trim())}; a.oninput=upd; b2.oninput=upd;
       b.onclick=()=>{ctx[s.a.key]=a.value.trim(); ctx[s.b.key]=b2.value.trim(); next();};
+    }
+    else if(s.type==="hold"){
+      const what = ctx[s.show]||"";
+      shell(`<p class="voice">${T(s.text,ctx)}</p>
+        ${what?`<p class="voice" id="sol" style="color:var(--lav);font-style:italic;transition:opacity .2s">${esc(what)}</p>`:""}
+        <div class="holdwrap"><button class="holdbtn" id="hb"><span id="hbt">mantén presionado</span><i id="hbf"></i></button></div>
+        <div class="actions"><button class="link" id="skip">pasar →</button></div>`);
+      document.getElementById("skip").onclick=next;
+      const hb=document.getElementById("hb"), hf=document.getElementById("hbf"), ht=document.getElementById("hbt"), sol=document.getElementById("sol");
+      let t0=null, raf=null, done=false;
+      const tick=now=>{ if(t0===null||done) return; const u=Math.min(1,(now-t0)/1000/s.secs);
+        hf.style.transform=`scaleX(${u})`; if(sol) sol.style.opacity=String(1-u);
+        if(u>=1){ done=true; ht.textContent="soltado"; chime(true); setTimeout(next,1400); return; } raf=requestAnimationFrame(tick); };
+      const down=e=>{ e.preventDefault(); if(done) return; t0=performance.now(); ht.textContent="exhala…"; raf=requestAnimationFrame(tick); };
+      const up=()=>{ if(done) return; t0=null; cancelAnimationFrame(raf); hf.style.transform="scaleX(0)"; if(sol) sol.style.opacity="1"; ht.textContent="mantén presionado"; };
+      hb.addEventListener("pointerdown",down); ["pointerup","pointerleave","pointercancel"].forEach(ev=>hb.addEventListener(ev,up));
+      hb.oncontextmenu=e=>e.preventDefault();
+      stopLoop=()=>{ done=true; cancelAnimationFrame(raf); };
+    }
+    else if(s.type==="exhale"){
+      shell(`<p class="voice">${T(s.text,ctx)}</p><div class="viz" style="max-height:38vh"><canvas id="v"></canvas></div>
+        <div class="timer" id="tm"></div><div class="bar"><span id="bar"></span></div>
+        <div class="actions"><button class="link" id="skip">pasar →</button></div>`);
+      document.getElementById("skip").onclick=next;
+      exhaleViz(document.getElementById("v"), s.secs);
+      const stopViz=stopLoop;
+      countdown(s.secs, ()=>{ stopViz(); chime(); next(); });
+      const stopCd=stopLoop; stopLoop=()=>{stopViz(); stopCd();};
     }
     else if(s.type==="choose"){
       shell(`<p class="voice">${T(s.text,ctx)}</p>${s.note?`<p class="note">${T(s.note,ctx)}</p>`:""}
@@ -731,7 +940,7 @@ function runPractice(id){
         ctx[s.key]= v.length>1 ? v.slice(0,-1).join(", ")+" y "+v[v.length-1] : v[0]; next(); };
     }
     else if(s.type==="range"){
-      shell(`<p class="voice">${s.text}</p>
+      shell(`<p class="voice">${T(s.text,ctx)}</p>
         <div class="range"><input type="range" id="rg" min="0" max="100" value="50" aria-label="${s.text}">
           <div class="ends"><span>${s.left}</span><span>${s.right}</span></div></div>
         <div class="actions"><button class="btn" id="n">continuar</button></div>`);
@@ -745,9 +954,10 @@ function runPractice(id){
       b.onclick=()=>{ dots[k].classList.add("lit"); k++; if(k>=s.n){ b.disabled=true; setTimeout(next,1100);} };
     }
     else if(s.type==="huella"){
-      const pre = s.prefill ? String(typeof s.prefill==="function" ? s.prefill(ctx) : (ctx[s.prefill]||"")).split("\n")[0].slice(0,120) : "";
+      const MX = s.max||120;
+      const pre = s.prefill ? String(typeof s.prefill==="function" ? s.prefill(ctx) : (ctx[s.prefill]||"")).split("\n")[0].slice(0,MX) : "";
       shell(`<p class="voice">${p.huellaPrompt}</p>
-        <label class="f"><span>tu huella · ${s.kind}</span><input type="text" id="hu" maxlength="120" value="${esc(pre)}"></label>
+        <label class="f"><span>tu huella · ${s.kind}</span><input type="text" id="hu" maxlength="${MX}" value="${esc(pre)}"></label>
         <div class="actions"><button class="btn" id="n" disabled>dejar huella</button></div>`);
       const inp=document.getElementById("hu"), b=document.getElementById("n");
       const upd=()=>{b.disabled=!inp.value.trim()}; inp.oninput=upd; upd(); inp.focus();
@@ -924,6 +1134,597 @@ function dotsViz(cv, lista){
   requestAnimationFrame(f); stopLoop=()=>{alive=false};
 }
 
+/* exhalación larga: el círculo se recoge */
+function exhaleViz(cv, secs){
+  const c=cv.getContext("2d"), dpr=fitCanvas(cv), K=cols(); const t0=performance.now(); let alive=true;
+  function f(now){
+    if(!alive) return; requestAnimationFrame(f);
+    const u=Math.min(1,(now-t0)/1000/secs), e=.5-.5*Math.cos(Math.PI*u);
+    const W=cv.width,H=cv.height, R=Math.max(1,Math.min(W,H)*(.40-.26*e));
+    c.clearRect(0,0,W,H);
+    c.strokeStyle=K.lav; c.globalAlpha=.25; c.lineWidth=1*dpr; c.beginPath(); c.arc(W/2,H/2,Math.min(W,H)*.40,0,7); c.stroke();
+    const g=c.createRadialGradient(W/2,H/2,0,W/2,H/2,R); g.addColorStop(0,K.teal); g.addColorStop(1,"rgba(0,0,0,0)");
+    c.globalAlpha=.45; c.fillStyle=g; c.beginPath(); c.arc(W/2,H/2,R,0,7); c.fill();
+    c.globalAlpha=.9; c.strokeStyle=K.teal; c.lineWidth=1.5*dpr; c.beginPath(); c.arc(W/2,H/2,R,0,7); c.stroke(); c.globalAlpha=1;
+  }
+  requestAnimationFrame(f); stopLoop=()=>{alive=false};
+}
+
+/* práctica 15: las letras se deshacen mientras respiras */
+function dissolveViz(cv, ctx){
+  const c=cv.getContext("2d"), dpr=fitCanvas(cv), K=cols(); const t0=performance.now(); let alive=true;
+  const W=cv.width,H=cv.height, fs=Math.max(16,Math.min(26, 520/Math.max(12,(ctx.termino||"").length)*2))*dpr;
+  c.font=`italic 300 ${fs}px Spectral,Georgia,serif`;
+  // reparte el texto en líneas y cada letra en su lugar
+  const words=String(ctx.termino||"").split(/\s+/), lines=[]; let ln="";
+  for(const w of words){ const t=ln?ln+" "+w:w; if(c.measureText(t).width>W*.82&&ln){lines.push(ln); ln=w;} else ln=t; } if(ln) lines.push(ln);
+  const lh=fs*1.35, y0=H/2-(lines.length-1)*lh/2, ch=[];
+  lines.forEach((l,li)=>{ let x=W/2-c.measureText(l).width/2;
+    for(const k of l){ const w=c.measureText(k).width; ch.push({k,x:x+w/2,y:y0+li*lh,st:3+Math.random()*16,dx:(Math.random()-.5)*60*dpr,dy:-(20+Math.random()*70)*dpr,r:(Math.random()-.5)*1.2}); x+=w; } });
+  function f(now){
+    if(!alive) return; requestAnimationFrame(f);
+    const el=(now-t0)/1000; c.clearRect(0,0,W,H);
+    const ph=(el%14), br=ph<4?ph/4:ph<6?1:ph<12?1-(ph-6)/6:0;
+    const R=Math.min(W,H)*(.30+.12*br);
+    c.strokeStyle=K.lav; c.globalAlpha=.18; c.lineWidth=1*dpr; c.beginPath(); c.arc(W/2,H/2,R,0,7); c.stroke();
+    c.textAlign="center"; c.textBaseline="middle"; c.font=`italic 300 ${fs}px Spectral,Georgia,serif`;
+    for(const p of ch){
+      const u=Math.max(0,Math.min(1,(el-p.st)/5)), e=u*u;
+      if(u>=1) continue;
+      c.save(); c.globalAlpha=(1-e)*.95; c.fillStyle=u>0?K.lav:"#dde5e8";
+      c.translate(p.x+p.dx*e, p.y+p.dy*e); c.rotate(p.r*e); c.fillText(p.k,0,0); c.restore();
+    }
+    c.globalAlpha=1;
+  }
+  requestAnimationFrame(f); stopLoop=()=>{alive=false};
+}
+
+/* práctica 18: un cielo nocturno que gira despacio */
+function skyViz(cv){
+  const c=cv.getContext("2d"), dpr=fitCanvas(cv), K=cols(); const t0=performance.now(); let alive=true;
+  const S=Array.from({length:950},()=>{ const r=Math.sqrt(Math.random()); return {r, a:Math.random()*Math.PI*2, m:Math.pow(Math.random(),6), p:Math.random()*6}; });
+  function f(now){
+    if(!alive) return; requestAnimationFrame(f);
+    const el=(now-t0)/1000, W=cv.width,H=cv.height, cx=W*.5, cy=H*1.05, RR=Math.hypot(W,H)*1.05, rot=el*.004;
+    c.fillStyle="#04060a"; c.fillRect(0,0,W,H);
+    const g=c.createLinearGradient(0,H,0,0); g.addColorStop(0,"rgba(92,214,198,.08)"); g.addColorStop(.4,"rgba(181,165,240,.04)"); g.addColorStop(1,"rgba(0,0,0,0)");
+    c.fillStyle=g; c.fillRect(0,0,W,H);
+    for(const s of S){
+      const a=s.a+rot, x=cx+Math.cos(a)*s.r*RR, y=cy+Math.sin(a)*s.r*RR; if(x<0||x>W||y<0||y>H) continue;
+      const tw=.55+.45*Math.sin(el*1.3+s.p), rad=Math.max(.3,(.5+s.m*2.4)*dpr);
+      c.globalAlpha=(.25+.75*s.m)*tw; c.fillStyle=s.m>.5?K.teal:"#dfe8f0"; c.beginPath(); c.arc(x,y,rad,0,7); c.fill();
+      if(s.m>.6){ c.globalAlpha=.12*tw; c.beginPath(); c.arc(x,y,rad*5,0,7); c.fill(); }
+    }
+    c.globalAlpha=1;
+  }
+  requestAnimationFrame(f); stopLoop=()=>{alive=false};
+}
+
+/* tres horizontes (práctica 20 y mapa final) */
+function horizonCurves(u){ // u: 0..1 a lo largo del tiempo → altura 0..1 de cada horizonte
+  const s=(x,a,b)=>Math.max(0,Math.min(1,(x-a)/(b-a))), sm=x=>x*x*(3-2*x);
+  return [ .88-.74*sm(s(u,.0,1)),                                   // H1 desciende
+           .10+.62*sm(s(u,.08,.55))-.22*sm(s(u,.7,1)),              // H2 asciende en el medio
+           .04+.86*sm(s(u,.25,1)) ];                                 // H3 nace al fondo
+}
+function drawHorizons(c, x0,y0,w,h, dpr, K, o){
+  // o: {prog (0..1), labels:[t1,t2,t3], sub:[s1,s2,s3]}
+  const cols3=[K.dim, K.lav, K.teal], N=120, prog=o.prog??1;
+  for(let k=0;k<3;k++){
+    c.strokeStyle=cols3[k]; c.lineWidth=(k===2?2.2:1.6)*dpr; c.globalAlpha=k===0?.85:1; c.beginPath();
+    for(let i=0;i<=N*prog;i++){ const u=i/N, yy=y0+h-horizonCurves(u)[k]*h, xx=x0+u*w; i?c.lineTo(xx,yy):c.moveTo(xx,yy); }
+    c.stroke();
+  }
+  c.globalAlpha=1;
+  if(o.labels){
+    const at=[.05,.42,.97];
+    o.labels.forEach((t,k)=>{
+      if(prog<at[k]) return;
+      const u=at[k], yy=y0+h-horizonCurves(u)[k]*h, xx=x0+u*w;
+      c.fillStyle=k===0?K.muted:cols3[k]; c.beginPath(); c.arc(xx,yy,3.5*dpr,0,7); c.fill();
+      c.font=`${10*dpr}px "Victor Mono",monospace`; c.textAlign=k===2?"right":"left"; c.textBaseline="bottom";
+      c.fillText(t, xx+(k===2?-8:6)*dpr, yy-8*dpr);
+    });
+  }
+}
+/* leyenda de los tres horizontes, debajo del gráfico */
+function drawHorizonLegend(c, x0,y0,w, dpr, K, rows, fsz){
+  const cols3=[K.muted, K.lav, K.teal]; let y=y0; fsz=fsz||13;
+  rows.forEach((r,k)=>{
+    c.textAlign="left"; c.textBaseline="top";
+    c.font=`${10*dpr}px "Victor Mono",monospace`; c.fillStyle=cols3[k]; c.fillText(r[0], x0, y+3*dpr);
+    c.font=`italic ${fsz*dpr}px Spectral,Georgia,serif`; c.fillStyle="#dde5e8";
+    const lines=wrapText(c, r[1]||"", w-34*dpr);
+    lines.forEach((l,i)=>c.fillText(l, x0+34*dpr, y+i*fsz*1.35*dpr));
+    y+=Math.max(1,lines.length)*fsz*1.35*dpr+8*dpr;
+  });
+  return y;
+}
+function wrapText(c, t, maxW){
+  const out=[]; let ln="";
+  for(const w of String(t).split(/\s+/)){ if(!w) continue; const tt=ln?ln+" "+w:w; if(c.measureText(tt).width>maxW&&ln){out.push(ln); ln=w;} else ln=tt; }
+  if(ln) out.push(ln); return out;
+}
+function horizonsViz(cv, ctx){
+  const c=cv.getContext("2d"), dpr=fitCanvas(cv), K=cols(); const t0=performance.now(); let alive=true;
+  function f(now){
+    if(!alive) return; requestAnimationFrame(f);
+    const el=(now-t0)/1000, prog=Math.min(1,el/6), W=cv.width,H=cv.height;
+    c.clearRect(0,0,W,H);
+    c.strokeStyle=K.dim; c.globalAlpha=.6; c.lineWidth=1*dpr; c.beginPath(); c.moveTo(W*.05,H*.60); c.lineTo(W*.95,H*.60); c.stroke(); c.globalAlpha=1;
+    drawHorizons(c, W*.05,H*.08,W*.9,H*.52, dpr, K, {prog, labels:["H1","H2","H3"]});
+    c.globalAlpha=Math.min(1,Math.max(0,(el-5)/1.5));
+    drawHorizonLegend(c, W*.05, H*.66, W*.9, dpr, K, [["H1",ctx.h1],["H2",ctx.h2],["H3",ctx.h3]]); c.globalAlpha=1;
+  }
+  requestAnimationFrame(f); stopLoop=()=>{alive=false};
+}
+
+/* ============ MAPA FINAL (días 27 y 28) ============ */
+const HORIZ = [
+  {k:"H1", c:"h1", t:"Lo que ya no se sostiene en ti", grupos:[
+    {q:"¿Qué comprensión del universo cambió en ti irreversiblemente?", ids:[1,2,3,4,5,18]},
+    {q:"¿Qué estructura del viejo paradigma ya no te representa?", ids:[6,7,11,15]}]},
+  {k:"H2", c:"h2", t:"Lo que estás ensayando", grupos:[
+    {q:"¿Qué forma nueva está emergiendo?", ids:[10,12,13,14,16,17,19]}]},
+  {k:"H3", c:"h3", t:"La visión que orienta", grupos:[
+    {q:"¿Desde dónde actúas ahora?", ids:[20,8]}]}
+];
+const CIERRE = "La que atraviesa el umbral no regresa; regresa otra.";
+const ASTRO_URL = "astro.js?v=1";
+const JSPDF_URL = "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
+function loadScript(src){
+  return new Promise((res,rej)=>{
+    if(document.querySelector(`script[data-src="${src}"]`)) return res();
+    const sc=document.createElement("script"); sc.src=src; sc.dataset.src=src; sc.onload=()=>res(); sc.onerror=()=>rej(new Error(src)); document.head.appendChild(sc);
+  });
+}
+const loadAstro = () => window.LabAstro ? Promise.resolve() : loadScript(ASTRO_URL);
+const huellaMapa = id => ((DB.mapa.aj||{})[id]) || DB.huellas[id]?.texto || "";
+const decYear = d => d.getFullYear() + (d - new Date(d.getFullYear(),0,1)) / (365.25*864e5);
+const sinTags = t => String(t||"").replace(/<[^>]+>/g,"");
+
+/* el modelo del mapa: todo lo que se muestra y se descarga */
+function modeloMapa(){
+  const h={}; for(let i=1;i<=20;i++){ const t=huellaMapa(i); if(t) h[i]=t; }
+  const M=DB.mapa;
+  return {n:M.nombre||"", d:M.desde||"", v:M.metaV||"", e:M.metaN||"", f:M.fecha||"", h, a:DB.astro||null,
+          l:(DB.huellas[20]&&DB.huellas[20].extra)||null};
+}
+function pasoMapa(){
+  const M=DB.mapa;
+  if(M.nombre) return "ver";
+  if(M.cielo) return "nombre";
+  if(M.metaV) return "cielo";
+  if(M.revisado) return "metaforas";
+  return "inicio";
+}
+
+function viewMapa(paso){
+  paso = paso || pasoMapa();
+  const M=DB.mapa; M.aj=M.aj||{};
+  const back = `<button class="link" id="back">← salas</button>`;
+  const bindBack = ()=>{ bindHeader(); document.getElementById("back").onclick=()=>go("home"); };
+
+  if(paso==="inicio"){
+    const n=Object.keys(DB.huellas).length;
+    app.innerHTML = header() + back + `
+      <h1><small>días 27 y 28 · versión 1</small>Tu mapa</h1>
+      <p class="voice">Tus huellas se ordenan en tres horizontes: lo que ya no se sostiene en ti, lo que estás ensayando y la visión que te orienta.</p>
+      <p class="note">${n} de 20 huellas. Puedes ajustar cada una con una línea. La huella original queda en su sala.</p>
+      <p class="voice">Al final, el tiempo colectivo sobre tu carta. Y mañana, después del ritual, tu nombre nuevo.</p>
+      <div class="actions"><button class="btn" id="n">comenzar</button></div>`;
+    bindBack(); document.getElementById("n").onclick=()=>go("mapa","revisar");
+  }
+  else if(paso==="revisar"){
+    app.innerHTML = header() + back + `
+      <h1><small>tu mapa · 1 de 4</small>Tus huellas en tres horizontes</h1>
+      <p class="note">Ajusta lo que quieras. Lo que dejes igual queda como lo escribiste.</p>
+      ${HORIZ.map(H=>`<div class="hz">
+        <div class="hz-h"><span class="hz-k ${H.c}">${H.k}</span><span class="hz-t">${H.t}</span></div>
+        ${H.grupos.map(g=>`<p class="hz-q">${g.q}</p>
+          ${g.ids.map(i=>`<div class="hz-i ${i===10?"semilla":""}"><span class="n">cápsula ${i}</span>
+            <span class="t"><small>${PRACTICAS[i].titulo}${i===10?" · semilla":""}</small>
+            <input type="text" data-i="${i}" maxlength="${i===20?240:120}" value="${esc(huellaMapa(i))}" placeholder="sin huella"></span></div>`).join("")}`).join("")}
+      </div>`).join("")}
+      <div class="actions"><button class="btn" id="n">guardar y seguir</button></div>`;
+    bindBack();
+    document.getElementById("n").onclick=()=>{
+      app.querySelectorAll("input[data-i]").forEach(inp=>{ const i=+inp.dataset.i, v=inp.value.trim();
+        if(v && v!==(DB.huellas[i]?.texto||"")) M.aj[i]=v; else delete M.aj[i]; });
+      M.revisado=true; saveMapa(); go("mapa","metaforas");
+    };
+  }
+  else if(paso==="metaforas"){
+    app.innerHTML = header() + back + `
+      <h1><small>tu mapa · 2 de 4</small>Dos metáforas y una fuente</h1>
+      <label class="f"><span>la metáfora que organizaba tu vida</span><textarea id="mv" rows="2" maxlength="160" placeholder="mi vida era una carrera, una fortaleza, una deuda…">${esc(M.metaV||"")}</textarea></label>
+      <p class="note">Va en la base del horizonte 1.</p>
+      <label class="f"><span>la metáfora que emerge</span><textarea id="me" rows="2" maxlength="160" placeholder="mi vida es un río, un tejido, un taller…">${esc(M.metaN||"")}</textarea></label>
+      <label class="f"><span>desde dónde actúas ahora</span><input type="text" id="dd" maxlength="120" placeholder="desde…" value="${esc(M.desde||"")}"></label>
+      <p class="note">No el nombre de un rol: la fuente. Vínculo o dominación, presencia o urgencia.</p>
+      <div class="actions"><button class="btn" id="n" disabled>seguir</button></div>`;
+    bindBack();
+    const f=["mv","me","dd"].map(x=>document.getElementById(x)), b=document.getElementById("n");
+    const upd=()=>{ b.disabled=f.some(x=>!x.value.trim()); }; f.forEach(x=>x.oninput=upd); upd();
+    b.onclick=()=>{ M.metaV=f[0].value.trim(); M.metaN=f[1].value.trim(); M.desde=f[2].value.trim(); saveMapa(); go("mapa","cielo"); };
+  }
+  else if(paso==="cielo"){ viewCielo(); }
+  else if(paso==="nombre"){
+    const d=diaHoy();
+    if(d<28){
+      app.innerHTML = header() + back + `
+        <h1><small>tu mapa · 4 de 4</small>El nombre nuevo</h1>
+        <p class="voice">El nombre nuevo llega mañana, con el ritual del día 28.</p>
+        <p class="note">Vuelve después del ritual para escribirlo y descargar tu mapa. Mientras, puedes mirar cómo va.</p>
+        <div class="actions"><button class="btn" id="n">ver mi mapa hasta ahora</button></div>`;
+      bindBack(); document.getElementById("n").onclick=()=>go("mapa","ver");
+    } else {
+      app.innerHTML = header() + back + `
+        <h1><small>tu mapa · 4 de 4</small>El nombre nuevo</h1>
+        <p class="voice">Después del ritual. ¿Cuál es tu nombre nuevo?</p>
+        <label class="f"><span>tu nombre nuevo</span><input type="text" id="nn" maxlength="60" value="${esc(M.nombre||"")}"></label>
+        <div class="actions"><button class="btn" id="n" disabled>crear mi mapa</button></div>`;
+      bindBack();
+      const inp=document.getElementById("nn"), b=document.getElementById("n");
+      inp.oninput=()=>{b.disabled=!inp.value.trim()}; inp.oninput(); inp.focus();
+      b.onclick=()=>{ M.nombre=inp.value.trim(); M.fecha=new Date().toISOString(); saveMapa(); chime(true); go("mapa","ver"); };
+    }
+  }
+  else if(paso==="ver"){
+    app.innerHTML = header() + back + `<div id="mapa"></div>`;
+    bindBack();
+    pintarMapa(document.getElementById("mapa"), modeloMapa(), {editable:true});
+  }
+}
+
+/* ---- datos de nacimiento y cálculo (motor de la calculadora) ---- */
+function viewCielo(){
+  app.innerHTML = header() + `<p class="mono" style="color:var(--muted);margin-top:30vh;text-align:center">abriendo el cielo…</p>`;
+  loadAstro().then(viewCieloForm).catch(()=>{
+    app.innerHTML = header() + `<p class="voice">No se pudo cargar el cielo. Revisa tu conexión.</p>
+      <div class="actions"><button class="btn" id="r">intentar de nuevo</button><button class="link" id="s">seguir sin carta</button></div>`;
+    bindHeader(); document.getElementById("r").onclick=viewCielo; document.getElementById("s").onclick=sinCarta;
+  });
+}
+function sinCarta(){ DB.astro={tier:"nada", items:[]}; DB.mapa.cielo=true; saveAstro(); saveMapa(); go("mapa","nombre"); }
+function viewCieloForm(){
+  const X=window.LabAstro; let nac={}; try{ nac=JSON.parse(localStorage.getItem("tu_nac"))||{} }catch(e){}
+  let modo=nac.modo||"", city=nac.city||null;
+  app.innerHTML = header() + `<button class="link" id="back">← salas</button>
+    <h1><small>tu mapa · 3 de 4</small>El tiempo colectivo sobre tu carta</h1>
+    <p class="voice">Con tu fecha de nacimiento, el mapa ubica los tres grandes tránsitos del laboratorio en tu vida: Plutón en Acuario, Urano en Géminis y Saturno-Neptuno en 0° Aries.</p>
+    <p class="note">Tus datos de nacimiento quedan solo en este dispositivo.</p>
+    <label class="f"><span>fecha de nacimiento</span><input type="date" id="nf" min="1930-01-01" max="2015-12-31" value="${esc(nac.fecha||"")}"></label>
+    <div class="f" style="display:flex;flex-direction:column;gap:8px"><span class="mono" style="color:var(--muted)">hora de nacimiento</span>
+      <div class="opts" id="hm">${["exacta","aproximada","no la sé"].map(o=>`<button class="opt" data-o="${o}" aria-pressed="${o===modo}">${o}</button>`).join("")}</div></div>
+    <div id="hx" hidden><label class="f"><span>hora</span><input type="time" id="nh" value="${esc(nac.h||"")}"></label></div>
+    <div id="hr" class="form2" hidden>
+      <label class="f"><span>entre</span><input type="time" id="nh1" value="${esc(nac.h1||"")}"></label>
+      <label class="f"><span>y</span><input type="time" id="nh2" value="${esc(nac.h2||"")}"></label></div>
+    <div id="lg" hidden><label class="f"><span>lugar de nacimiento</span><input type="text" id="lc" autocomplete="off" placeholder="escribe tu ciudad" value="${city?esc(city.name+", "+X.ccLabel(city.cc)):""}"></label>
+      <div class="citylist" id="cl" hidden></div></div>
+    <p class="err" id="er" hidden></p>
+    <div class="actions"><button class="btn" id="n">calcular mi cielo</button><button class="link" id="s">seguir sin carta</button></div>`;
+  bindHeader(); document.getElementById("back").onclick=()=>go("home");
+  const $=id=>document.getElementById(id);
+  const vis=()=>{ $("hx").hidden=modo!=="exacta"; $("hr").hidden=modo!=="aproximada"; $("lg").hidden=!(modo==="exacta"||modo==="aproximada"); };
+  vis();
+  app.querySelectorAll("#hm .opt").forEach(b=>b.onclick=()=>{ modo=b.dataset.o; app.querySelectorAll("#hm .opt").forEach(x=>x.setAttribute("aria-pressed",String(x===b))); vis(); });
+  const lc=$("lc"), cl=$("cl");
+  lc.oninput=()=>{
+    city=null; const q=X.norm(lc.value.trim()); cl.innerHTML="";
+    if(q.length<2){ cl.hidden=true; return; }
+    const C=X.CITIES.c, res=[];
+    for(let i=0;i<C.length&&res.length<8;i++) if(X.norm(C[i][0]).startsWith(q)) res.push(C[i]);
+    for(let i=0;i<C.length&&res.length<8;i++){ const nm=X.norm(C[i][0]); if(nm.indexOf(q)>0) res.push(C[i]); }
+    res.forEach(c=>{ const b=document.createElement("button"); b.type="button"; b.textContent=`${c[0]}, ${X.ccLabel(c[1])}`;
+      b.onclick=()=>{ city={name:c[0],cc:c[1],lat:c[2],lon:c[3],tz:X.CITIES.tz[c[4]]}; lc.value=b.textContent; cl.hidden=true; };
+      cl.appendChild(b); });
+    cl.hidden=!res.length;
+  };
+  $("s").onclick=sinCarta;
+  $("n").onclick=()=>{
+    const er=$("er"), fail=t=>{ er.textContent=t; er.hidden=false; };
+    const fecha=$("nf").value; if(!/^\d{4}-\d{2}-\d{2}$/.test(fecha)) return fail("Falta tu fecha de nacimiento.");
+    const y=+fecha.slice(0,4); if(y<1930||y>2015) return fail("La fecha debe estar entre 1930 y 2015.");
+    if(!modo) return fail("Elige cómo es tu hora de nacimiento.");
+    const n={fecha, modo, h:$("nh").value, h1:$("nh1").value, h2:$("nh2").value, city};
+    if(modo==="exacta" && !n.h) return fail("Falta la hora.");
+    if(modo==="aproximada"){ if(!n.h1||!n.h2) return fail("Faltan las dos horas del rango."); if(n.h2<=n.h1) return fail("La segunda hora debe ser posterior a la primera."); }
+    if((modo==="exacta"||modo==="aproximada") && !city) return fail("Elige tu lugar de nacimiento en la lista.");
+    try{ localStorage.setItem("tu_nac", JSON.stringify(n)) }catch(e){}
+    DB.astro = calcularCielo(n); DB.mapa.cielo=true; saveAstro(); saveMapa();
+    viewCieloResultado();
+  };
+}
+function calcularCielo(n){
+  const X=window.LabAstro, A=X.A; const [Y,Mo,D]=n.fecha.split("-").map(Number);
+  const hm=t=>{ const [h,m]=t.split(":").map(Number); return {h,m}; };
+  let jd, cusps=null, c1=null, c2=null, asc=null, mc=null, tier="nose", moonRange=6.6;
+  const casas=(j,c)=>A.placidus(A.norm360(A.gmst(j)+c.lon), A.obliquity(j), c.lat);
+  if(n.modo==="exacta" && n.city){
+    const t=hm(n.h); jd=X.localToJD(Y,Mo,D,t.h,t.m,n.city.tz,Math.round(n.city.lon/15)).jd;
+    const H=casas(jd,n.city); cusps=H.cusps; asc=H.asc; mc=H.mc; tier="exacta"; moonRange=0;
+  } else if(n.modo==="aproximada" && n.city){
+    const t1=hm(n.h1), t2=hm(n.h2), off=Math.round(n.city.lon/15);
+    const j1=X.localToJD(Y,Mo,D,t1.h,t1.m,n.city.tz,off).jd, j2=X.localToJD(Y,Mo,D,t2.h,t2.m,n.city.tz,off).jd;
+    jd=(j1+j2)/2; const H=casas(jd,n.city); cusps=H.cusps; asc=H.asc;
+    c1=casas(j1,n.city).cusps; c2=casas(j2,n.city).cusps; tier="rango"; moonRange=0;
+  } else { jd=X.jdNoonUT(Y,Mo,D); }
+  const nat=X.natalPositions(jd);
+  const targets=[["Sun","tu Sol"],["Moon","tu Luna"],["Mercury","tu Mercurio"],["Venus","tu Venus"],["Mars","tu Marte"],["Jupiter","tu Júpiter"]]
+    .map(([k,l])=>({key:k,label:l,lon:nat[k]}));
+  if(tier==="exacta"){ targets.push({key:"Asc",label:"tu Ascendente",lon:asc}); targets.push({key:"MC",label:"tu Medio Cielo",lon:mc}); }
+  const items = X.TRANSITS.map(T=>{
+    let houses=null, incierta=false;
+    if(cusps){
+      houses=X.housesForRange(T.deg[0],T.deg[1],cusps);
+      if(tier==="rango"){ const u=new Set(); [c1,cusps,c2].forEach(cc=>X.housesForRange(T.deg[0],T.deg[1],cc).forEach(h=>u.add(h)));
+        const uni=[...u].sort((a,b)=>a-b); if(uni.length>houses.length){ incierta=true; houses=uni; } }
+    }
+    const g={};
+    X.scanAspects(T.body,T.y0,T.y1,targets,2.5,moonRange).forEach(it=>{
+      const id=it.tgt.key+"|"+it.asp.n;
+      g[id]=g[id]||{n:it.asp.n, t:it.tgt.label, ap:!!it.approx, w:[], ex:[]};
+      g[id].w.push([+it.winS.toFixed(3), +it.winE.toFixed(3)]); g[id].ex.push(+it.exact.toFixed(3));
+    });
+    return {key:T.key, houses, incierta, asp:Object.values(g).sort((a,b)=>a.ex[0]-b.ex[0])};
+  });
+  return {tier, asc: asc!==null&&tier==="exacta" ? X.fmtDeg(asc) : "", items};
+}
+function viewCieloResultado(){
+  app.innerHTML = header() + `<button class="link" id="back">← salas</button>
+    <h1><small>tu mapa · 3 de 4</small>Tu cielo</h1><div id="ac"></div>
+    <div class="actions"><button class="btn" id="n">seguir</button><button class="link" id="c">cambiar mis datos</button></div>`;
+  bindHeader(); document.getElementById("back").onclick=()=>go("home");
+  document.getElementById("ac").innerHTML = astroHTML(DB.astro);
+  document.getElementById("n").onclick=()=>go("mapa","nombre");
+  document.getElementById("c").onclick=()=>viewCielo();
+}
+
+/* ---- textos de la capa astrológica (los mismos de la calculadora) ---- */
+const NOTA_TIER = {
+  exacta:"Calculado con tu hora y lugar exactos: casas Placidus y aspectos a tu carta.",
+  rango:"Hora aproximada: una casa se afirma si el tránsito no cambia de casa dentro de tu rango; si cambia, queda incierta. Los aspectos son a tus planetas.",
+  nose:"Sin hora de nacimiento: los aspectos de los tránsitos a tus planetas. Tu Luna se toma como rango, porque se mueve rápido en el día. Las casas necesitan hora y lugar."
+};
+function lineaAspecto(a){
+  const X=window.LabAstro, w0=Math.floor(Math.min(...a.w.map(w=>w[0]))), w1=Math.ceil(Math.max(...a.w.map(w=>w[1])));
+  const ex=a.ex.map(X.decYearToLabel); const exs = ex.length>2 ? `${ex[0]} … ${ex[ex.length-1]}` : ex.join(" y ");
+  return `${a.n} a ${a.t} · exacta ${exs} · ${w0>=w1?w0:`ventana ${w0}–${w1}`}${a.ap?" · aprox.":""}`;
+}
+function textoCasa(T, it){
+  const X=window.LabAstro;
+  if(!it.houses||!it.houses.length) return "";
+  const main=it.houses[0], txt=sinTags(X.HT[T.key][main]||"");
+  if(it.incierta) return `Casa incierta por tu hora aproximada: podría ser la ${it.houses.map(X.rom).join(" o la ")}. Te mostramos la Casa ${X.rom(main)}. ${txt}`;
+  if(it.houses.length>1) return `Este tránsito atraviesa tus Casas ${it.houses.map(X.rom).join(" y ")}. ${txt}`;
+  return txt;
+}
+function astroBloques(a){ // estructura común para pantalla y PDF
+  const X=window.LabAstro; if(!a||a.tier==="nada"||!X) return null;
+  return {nota:NOTA_TIER[a.tier]||"", asc:a.asc, items:a.items.map(it=>{
+    const T=X.TRANSITS.find(t=>t.key===it.key);
+    const badge = it.houses&&it.houses.length ? (it.incierta?`Casa ${X.rom(it.houses[0])}–${X.rom(it.houses[it.houses.length-1])} ?`:it.houses.map(h=>"Casa "+X.rom(h)).join("–")) : "";
+    return {nombre:T.name, pos:T.pos, desc:sinTags(T.desc), badge, incierta:it.incierta, casa:textoCasa(T,it),
+            aspectos:it.asp.slice(0,5).map(lineaAspecto)};
+  })};
+}
+function astroHTML(a){
+  const B=astroBloques(a);
+  if(!B) return `<p class="note">Tu mapa se genera sin la capa astrológica.</p>`;
+  return `<p class="note">${B.nota}${B.asc?` Ascendente ${esc(B.asc)}.`:""}</p>` + B.items.map(it=>`
+    <div class="acard"><span class="an">${esc(it.nombre)}</span><span class="ap">${esc(it.pos)}</span>
+      ${it.badge?`<span class="badge ${it.incierta?"q":""}">${esc(it.badge)}</span>`:""}
+      <p class="ad">${esc(it.desc)}</p>
+      ${it.casa?`<p class="ah">${esc(it.casa)}</p>`:""}
+      ${it.aspectos.length?`<span class="ap">aspectos a tu carta</span><ul>${it.aspectos.map(l=>`<li>${esc(l)}</li>`).join("")}</ul>`:""}
+    </div>`).join("");
+}
+
+/* ---- el mapa en pantalla ---- */
+function pintarMapa(el, m, op){
+  op=op||{};
+  const fecha = m.f ? new Date(m.f) : new Date();
+  const H = id => m.h[id]||"";
+  const item = i => `<div class="hz-i ${i===10?"semilla":""}"><span class="n">cápsula ${i}</span>
+      <span class="t"><small>${PRACTICAS[i].titulo}${i===10?" · semilla":""}</small>${H(i)?esc(H(i)):`<span style="color:var(--dim)">sin huella</span>`}</span></div>`;
+  el.innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:26px">
+    <h1><small>mapa de tres horizontes · versión 1 · ${fmt(fecha)} ${fecha.getFullYear()}</small>${m.n?esc(m.n):"Tu mapa"}</h1>
+    ${!m.n?`<p class="note">El nombre nuevo se escribe el día 28, después del ritual.</p>`:""}
+    ${m.d?`<p class="voice">Desde dónde actúas: <em>${esc(m.d)}</em></p>`:""}
+    <canvas class="mapcv" id="mcv"></canvas>
+    ${HORIZ.map((Hz,k)=>`<div class="hz">
+      <div class="hz-h"><span class="hz-k ${Hz.c}">${Hz.k}</span><span class="hz-t">${Hz.t}</span></div>
+      ${Hz.grupos.map(g=>`<p class="hz-q">${g.q}</p>${g.ids.map(item).join("")}`).join("")}
+      ${k===0&&m.v?`<div class="meta"><span>la metáfora que organizaba tu vida</span><p>${esc(m.v)}</p></div>`:""}
+      ${k===2&&m.e?`<div class="meta"><span>la metáfora que emerge</span><p>${esc(m.e)}</p></div>`:""}
+    </div>`).join("")}
+    <div class="hz"><div class="hz-h"><span class="hz-k">✦</span><span class="hz-t">El tiempo colectivo sobre tu carta</span></div>
+      <div id="astro" style="display:flex;flex-direction:column;gap:14px"><p class="note">cargando…</p></div></div>
+    <p class="voice cierre">${CIERRE}</p>
+    <div class="actions">${m.n?`<button class="btn" id="dl">descargar mi mapa</button>`:""}
+      ${op.editable?`<button class="link" id="ed">ajustar</button>`:""}</div>
+    <p class="note" id="dlm" hidden></p>
+    </div>`;
+  const draw=()=>drawMapa(document.getElementById("mcv"), m);
+  const fill=()=>{ const a=document.getElementById("astro"); if(a) a.innerHTML=astroHTML(m.a); draw(); };
+  if(m.a && m.a.tier!=="nada") loadAstro().then(fill).catch(()=>{ const a=document.getElementById("astro"); if(a) a.innerHTML=`<p class="note">No se pudo cargar la capa astrológica.</p>`; draw(); });
+  else fill();
+  const ed=document.getElementById("ed"); if(ed) ed.onclick=()=>go("mapa","revisar");
+  const dl=document.getElementById("dl"); if(dl) dl.onclick=()=>descargarMapa(m, dl);
+}
+
+/* diagrama: tres horizontes sobre el tiempo real, con las ventanas de los tránsitos */
+const AX0=2025, AX1=2044;
+function drawMapa(cv, m, fixed){
+  if(!cv) return;
+  const tieneAstro = m.a && m.a.tier!=="nada" && window.LabAstro;
+  let dpr, W, H, c;
+  if(fixed){ c=cv.getContext("2d"); dpr=fixed.dpr; W=cv.width; H=cv.height; }
+  else { cv.style.aspectRatio = tieneAstro ? (cv.clientWidth<520 ? "1/1.08" : "4/3.4") : "16/10"; dpr=fitCanvas(cv); W=cv.width; H=cv.height; c=cv.getContext("2d"); c.clearRect(0,0,W,H); }
+  const K=fixed?fixed.K:cols();
+  const x0=W*.03+14*dpr, w=W*.94-28*dpr, chartH = tieneAstro ? H*.46 : H*.78, y0=H*.06;
+  const X = y => x0 + (y-AX0)/(AX1-AX0)*w;
+  // eje
+  const ay=y0+chartH+6*dpr;
+  c.strokeStyle=K.dim; c.lineWidth=1*dpr; c.beginPath(); c.moveTo(x0,ay); c.lineTo(x0+w,ay); c.stroke();
+  c.font=`${9.5*dpr}px "Victor Mono",monospace`; c.fillStyle=K.muted; c.textAlign="center"; c.textBaseline="top";
+  [2025,2030,2035,2040,2044].forEach(y=>{ c.beginPath(); c.moveTo(X(y),ay); c.lineTo(X(y),ay+4*dpr); c.stroke(); c.fillText(String(y),X(y),ay+7*dpr); });
+  // hoy
+  const hoy = decYear(m.f?new Date(m.f):new Date()), hx=X(Math.max(AX0,Math.min(AX1,hoy)));
+  c.setLineDash([2*dpr,4*dpr]); c.strokeStyle=K.lav; c.globalAlpha=.6; c.beginPath(); c.moveTo(hx,y0); c.lineTo(hx,tieneAstro?H*.97:ay); c.stroke(); c.setLineDash([]); c.globalAlpha=1;
+  c.fillStyle=K.lav; c.textAlign="left"; c.textBaseline="top"; c.fillText("hoy", hx+4*dpr, y0);
+  drawHorizons(c, x0, y0+14*dpr, w, chartH-14*dpr, dpr, K, {labels:["H1","H2","H3"]});
+  if(!tieneAstro) return;
+  // filas de tránsitos
+  const L=window.LabAstro, rows=[["pl","PLUTÓN EN ACUARIO"],["ur","URANO EN GÉMINIS"],["ns","SATURNO-NEPTUNO 0° ARIES"]];
+  const r0=ay+30*dpr, rh=(H*.97-r0)/3;
+  rows.forEach(([key,label],k)=>{
+    const T=L.TRANSITS.find(t=>t.key===key), it=m.a.items.find(i=>i.key===key); if(!T||!it) return;
+    const yy=r0+k*rh+rh*.45;
+    c.font=`${9*dpr}px "Victor Mono",monospace`; c.fillStyle=K.muted; c.textAlign="left"; c.textBaseline="bottom";
+    c.fillText(label + (it.houses&&it.houses.length?` · CASA ${L.rom(it.houses[0])}${it.incierta?" ?":""}`:""), x0, yy-10*dpr);
+    const a0=Math.max(AX0,T.y0), a1=Math.min(AX1,T.y1);
+    c.strokeStyle=K.dim; c.lineWidth=2*dpr; c.globalAlpha=.8; c.beginPath(); c.moveTo(X(a0),yy); c.lineTo(X(a1),yy); c.stroke(); c.globalAlpha=1;
+    const vistos=new Set(); let finAnt=-1e9;
+    c.font=`${8.5*dpr}px "Victor Mono",monospace`;
+    it.asp.forEach(a=>{
+      a.w.forEach(([s,e])=>{ if(e<AX0||s>AX1) return; const xs=X(Math.max(AX0,s)), xe=Math.max(xs+3*dpr,X(Math.min(AX1,e)));
+        c.fillStyle=key==="pl"?K.teal:key==="ur"?K.lav:"#dde5e8"; c.globalAlpha=.85; c.fillRect(xs,yy-3*dpr,xe-xs,6*dpr); c.globalAlpha=1; });
+      const ex=a.ex[0], lab=a.t.replace(/^tu /,"");
+      if(ex<AX0||ex>AX1||vistos.has(lab)) return;
+      const xl=X(ex), tw=c.measureText(lab).width;
+      if(xl-tw/2 < finAnt+6*dpr) return;               // no encimar etiquetas: el detalle está en el texto
+      vistos.add(lab); finAnt=xl+tw/2;
+      c.fillStyle=K.fg||"#dde5e8"; c.globalAlpha=.85; c.textAlign="center"; c.textBaseline="top"; c.fillText(lab, xl, yy+7*dpr); c.globalAlpha=1;
+    });
+  });
+}
+
+/* ---- descarga ---- */
+async function empaquetar(m){
+  const json=JSON.stringify(m);
+  try{
+    const cs=new Blob([json]).stream().pipeThrough(new CompressionStream("deflate-raw"));
+    const buf=new Uint8Array(await new Response(cs).arrayBuffer());
+    let bin=""; buf.forEach(b=>bin+=String.fromCharCode(b));
+    return "z"+btoa(bin).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
+  }catch(e){ return "j"+btoa(unescape(encodeURIComponent(json))).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,""); }
+}
+async function desempaquetar(s){
+  const k=s[0], b=s.slice(1).replace(/-/g,"+").replace(/_/g,"/"); const bin=atob(b+"===".slice((b.length+3)%4));
+  if(k==="j") return JSON.parse(decodeURIComponent(escape(bin)));
+  const u=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) u[i]=bin.charCodeAt(i);
+  const ds=new Blob([u]).stream().pipeThrough(new DecompressionStream("deflate-raw"));
+  return JSON.parse(await new Response(ds).text());
+}
+async function descargarMapa(m, btn){
+  const msg=document.getElementById("dlm");
+  if(IN_TG){
+    // Telegram no deja descargar archivos desde la app: el mapa se abre en el navegador, con su botón de PDF
+    const url = location.origin + location.pathname + "#mapa=" + await empaquetar(m);
+    try{ TG.openLink(url); }catch(e){ location.href=url; }
+    if(msg){ msg.textContent="Tu mapa se abrió en el navegador. Ahí puedes descargarlo en PDF."; msg.hidden=false; }
+    return;
+  }
+  const t=btn.textContent; btn.disabled=true; btn.textContent="preparando…";
+  try{ await crearPDF(m); }
+  catch(e){ if(msg){ msg.textContent="No se pudo crear el PDF. Revisa tu conexión e intenta de nuevo."; msg.hidden=false; } }
+  btn.disabled=false; btn.textContent=t;
+}
+async function viewMapaExterno(){
+  app.innerHTML = `<p class="mono" style="color:var(--muted);margin-top:40vh;text-align:center">abriendo tu mapa…</p>`;
+  let m; try{ m=await desempaquetar(location.hash.slice(6)); }catch(e){ m=null; }
+  if(!m){ app.innerHTML=`<p class="voice">Este enlace del mapa no se pudo leer.</p>`; return; }
+  app.innerHTML = `<div class="mono brand" style="color:var(--muted)"><b style="color:var(--teal);font-weight:500">ASTROLABIO</b> · TRIBU_URANA</div><div id="mapa"></div>`;
+  pintarMapa(document.getElementById("mapa"), m, {});
+}
+
+/* ---- PDF: páginas A4 dibujadas en canvas ---- */
+async function crearPDF(m){
+  await loadScript(JSPDF_URL);
+  if(m.a && m.a.tier!=="nada") await loadAstro();
+  try{ await Promise.all(['400 20px "Victor Mono"','500 20px "Victor Mono"','300 20px Spectral','italic 300 20px Spectral','400 20px Spectral'].map(f=>document.fonts.load(f))); }catch(e){}
+  const pages=paginasMapa(m);
+  const {jsPDF}=window.jspdf; const doc=new jsPDF({unit:"pt",format:"a4",compress:true});
+  pages.forEach((cv,i)=>{ if(i) doc.addPage(); doc.addImage(cv.toDataURL("image/jpeg",.88),"JPEG",0,0,595.28,841.89,undefined,"FAST"); });
+  const slug=(m.n||"astrolabio").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"");
+  doc.save(`mapa-${slug||"astrolabio"}.pdf`);
+}
+function paginasMapa(m){
+  const W=1240, H=1754, dpr=2, M=56*dpr, CW=W-2*M, pages=[];
+  const K={teal:"#5cd6c6", lav:"#b5a5f0", dim:"#4a5560", muted:"#7b8894", fg:"#dde5e8"};
+  const fecha = m.f ? new Date(m.f) : new Date(), fstr=`${fmt(fecha)} ${fecha.getFullYear()}`;
+  let c, y;
+  const nueva=()=>{ const cv=document.createElement("canvas"); cv.width=W; cv.height=H; c=cv.getContext("2d");
+    c.fillStyle="#06080c"; c.fillRect(0,0,W,H);
+    c.font=`${8.5*dpr}px "Victor Mono",monospace`; c.fillStyle=K.dim; c.textAlign="left"; c.textBaseline="bottom";
+    c.fillText(`ASTROLABIO · TRIBU URANA · MAPA DE TRES HORIZONTES · VERSIÓN 1 · ${fstr.toUpperCase()}`, M, H-28*dpr);
+    c.textAlign="right"; c.fillText(String(pages.length+1), W-M, H-28*dpr);
+    pages.push(cv); y=M; };
+  const limite=()=>H-M-24*dpr;
+  const fonts={mono:s=>`400 ${s*dpr}px "Victor Mono",monospace`, monoB:s=>`500 ${s*dpr}px "Victor Mono",monospace`,
+               voz:s=>`300 ${s*dpr}px Spectral,Georgia,serif`, vozI:s=>`italic 300 ${s*dpr}px Spectral,Georgia,serif`};
+  const txt=(t,o)=>{ if(!t) return; o=o||{}; const size=o.size||13, lh=(o.lh||1.5)*size*dpr, x=M+(o.ind||0)*dpr, mw=CW-(o.ind||0)*dpr;
+    c.font=fonts[o.f||"voz"](size); const lines=wrapText(c, o.up?String(t).toUpperCase():t, mw);
+    lines.forEach(l=>{ if(y+lh>limite()) nueva(); c.font=fonts[o.f||"voz"](size); c.fillStyle=o.color||K.fg; c.textAlign=o.center?"center":"left"; c.textBaseline="top";
+      c.fillText(l, o.center?W/2:x, y); y+=lh; });
+    y+=(o.gap??6)*dpr; };
+  const sp=v=>{ y+=v*dpr; };
+  const regla=()=>{ if(y+20*dpr>limite()) nueva(); const g=c.createLinearGradient(M,0,W-M,0); g.addColorStop(0,K.teal); g.addColorStop(.6,K.lav); g.addColorStop(1,"rgba(0,0,0,0)");
+    c.fillStyle=g; c.globalAlpha=.5; c.fillRect(M,y,CW,1*dpr); c.globalAlpha=1; y+=16*dpr; };
+  nueva();
+  txt("ASTROLABIO · Tribu Urana · Laboratorio de Reinicio Ontológico", {f:"mono",size:9,color:K.teal,up:true,gap:2});
+  txt(`Mapa de tres horizontes · versión 1 · ${fstr}`, {f:"mono",size:9,color:K.muted,up:true,gap:18});
+  txt(m.n||"Tu mapa", {f:"monoB",size:30,lh:1.2,gap:12});
+  if(m.d) txt(`Desde dónde actúas: ${m.d}`, {f:"vozI",size:16,color:K.lav,gap:14});
+  // diagrama
+  const tieneAstro = m.a && m.a.tier!=="nada" && window.LabAstro;
+  const dh = Math.round(CW*(tieneAstro?0.82:0.56));
+  if(y+dh>limite()) nueva();
+  const dc=document.createElement("canvas"); dc.width=CW; dc.height=dh;
+  drawMapa(dc, m, {dpr, K}); c.drawImage(dc, M, y); y+=dh+18*dpr;
+  // horizontes
+  HORIZ.forEach((Hz,k)=>{
+    regla();
+    txt(`${Hz.k} · ${Hz.t}`, {f:"mono",size:11,color:[K.muted,K.lav,K.teal][k],up:true,gap:8});
+    Hz.grupos.forEach(g=>{
+      txt(g.q, {f:"vozI",size:13,color:K.muted,gap:6});
+      g.ids.forEach(i=>{
+        if(y+40*dpr>limite()) nueva();
+        txt(`cápsula ${i} · ${PRACTICAS[i].titulo}${i===10?" · semilla":""}`, {f:"mono",size:8.5,color:K.dim,up:true,gap:1,ind:12});
+        txt(m.h[i]||"sin huella", {f:"voz",size:14,color:m.h[i]?(i===10?K.teal:K.fg):K.dim,gap:8,ind:12});
+      });
+    });
+    if(k===0&&m.v){ txt("La metáfora que organizaba tu vida", {f:"mono",size:8.5,color:K.muted,up:true,gap:1,ind:12}); txt(m.v,{f:"vozI",size:15,color:K.lav,gap:10,ind:12}); }
+    if(k===2&&m.e){ txt("La metáfora que emerge", {f:"mono",size:8.5,color:K.muted,up:true,gap:1,ind:12}); txt(m.e,{f:"vozI",size:15,color:K.lav,gap:10,ind:12}); }
+    sp(6);
+  });
+  // capa astrológica
+  const B=astroBloques(m.a);
+  regla();
+  txt("El tiempo colectivo sobre tu carta", {f:"mono",size:11,color:K.teal,up:true,gap:8});
+  if(!B) txt("Este mapa se generó sin la capa astrológica.", {f:"vozI",size:13,color:K.muted});
+  else {
+    txt(B.nota+(B.asc?` Ascendente ${B.asc}.`:""), {f:"vozI",size:12.5,color:K.muted,gap:12});
+    B.items.forEach(it=>{
+      if(y+80*dpr>limite()) nueva();
+      txt(it.nombre, {f:"monoB",size:12,color:K.teal,gap:2});
+      txt(it.pos+(it.badge?`  ·  ${it.badge}`:""), {f:"mono",size:9,color:K.muted,up:true,gap:6});
+      txt(it.desc, {f:"voz",size:12.5,gap:6});
+      if(it.casa) txt(it.casa, {f:"voz",size:12.5,color:K.lav,gap:6,ind:12});
+      if(it.aspectos.length){ txt("Aspectos a tu carta", {f:"mono",size:8.5,color:K.muted,up:true,gap:2});
+        it.aspectos.forEach(l=>txt(l,{f:"mono",size:9.5,gap:1,ind:12})); }
+      sp(14);
+    });
+  }
+  regla(); sp(10);
+  txt(CIERRE, {f:"vozI",size:17,color:K.lav,center:true});
+  return pages;
+}
+
 /* ============ MIS HUELLAS ============ */
 function viewBackup(){
   const ids=Object.keys(DB.huellas).map(Number).sort((x,y)=>x-y);
@@ -942,7 +1743,7 @@ function viewBackup(){
   document.getElementById("back").onclick=()=>go("home");
   let armed=false;
   document.getElementById("wipe").onclick=e=>{
-    if(!armed){ armed=true; e.target.textContent="toca de nuevo para borrarlas para siempre"; return; }
+    if(!armed){ armed=true; e.target.textContent="toca de nuevo para borrarlas para siempre (también tu mapa)"; return; }
     wipeAll(); go("backup");
   };
 }
@@ -969,8 +1770,10 @@ function go(v,arg){
   else if(v==="intro") viewIntro(arg);
   else if(v==="backup") viewBackup();
   else if(v==="sumar") viewSumar();
+  else if(v==="mapa") viewMapa(arg);
 }
-if(!IN_TG && !PREVIEW){ viewSoloTelegram(); }
+if(location.hash.startsWith("#mapa=")){ viewMapaExterno(); }
+else if(!IN_TG && !PREVIEW){ viewSoloTelegram(); }
 else { app.innerHTML=`<p class="mono" style="color:var(--muted);margin-top:40vh;text-align:center">abriendo tu cielo…</p>`; loadAll().then(()=>go("home")); }
 </script>
 
