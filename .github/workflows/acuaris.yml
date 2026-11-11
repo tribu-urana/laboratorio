@@ -1,0 +1,44 @@
+# Mensaje diario de Acuaris en el grupo del Laboratorio.
+# Sale cada día a las 8:00 de Chile (11:00 UTC en verano). GitHub puede atrasarlo algunos minutos.
+# Lee el texto del día en mensajes.json. Si la fecha no está, no envía nada.
+# Para pausarlo: pestaña Actions > "Mensaje diario de Acuaris" > "Disable workflow".
+name: Mensaje diario de Acuaris
+
+on:
+  schedule:
+    - cron: "0 11 * * *"
+  workflow_dispatch:
+    inputs:
+      fecha:
+        description: "Fecha a enviar (AAAA-MM-DD). Vacío = hoy"
+        required: false
+        default: ""
+
+jobs:
+  enviar:
+    runs-on: ubuntu-latest
+    env:
+      TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+      CHAT_ID: "-1003964114876"
+      FECHA: ${{ github.event.inputs.fecha }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Enviar
+        run: |
+          python3 - <<'PY'
+          import json, os, urllib.request, datetime
+          from zoneinfo import ZoneInfo
+          fecha = os.environ.get("FECHA") or datetime.datetime.now(ZoneInfo("America/Santiago")).date().isoformat()
+          msgs = json.load(open("mensajes.json", encoding="utf-8"))
+          m = msgs.get(fecha)
+          if not m or not m.get("texto"):
+              print("Sin mensaje para", fecha); raise SystemExit(0)
+          data = {"chat_id": os.environ["CHAT_ID"], "text": m["texto"]}
+          if m.get("boton"):
+              data["reply_markup"] = {"inline_keyboard": [[{"text": "Abrir mi práctica", "url": "https://t.me/TribuUranaLabBot"}]]}
+          req = urllib.request.Request(
+              "https://api.telegram.org/bot%s/sendMessage" % os.environ["TELEGRAM_TOKEN"],
+              data=json.dumps(data).encode(), headers={"Content-Type": "application/json"})
+          r = json.load(urllib.request.urlopen(req))
+          print("Enviado:", fecha, r.get("ok"))
+          PY
