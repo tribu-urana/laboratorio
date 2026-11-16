@@ -20,6 +20,10 @@ on:
         description: "si = mostrar el texto sin enviarlo"
         required: false
         default: ""
+      texto_prueba:
+        description: "Si se escribe algo, envía solo ese texto de prueba al grupo"
+        required: false
+        default: ""
 
 jobs:
   enviar:
@@ -30,6 +34,7 @@ jobs:
       FECHA: ${{ github.event.inputs.fecha }}
       FRANJA: ${{ github.event.inputs.franja }}
       SOLO_VER: ${{ github.event.inputs.solo_ver }}
+      TEXTO_PRUEBA: ${{ github.event.inputs.texto_prueba }}
     steps:
       - uses: actions/checkout@v4
       - name: Enviar
@@ -40,7 +45,9 @@ jobs:
           ahora = datetime.datetime.now(ZoneInfo("America/Santiago"))
           fecha = os.environ.get("FECHA") or ahora.date().isoformat()
           franja = os.environ.get("FRANJA") or ("manana" if ahora.hour < 13 else "tarde")
-          if franja == "manana":
+          if os.environ.get("TEXTO_PRUEBA"):
+              envios = [{"texto": os.environ["TEXTO_PRUEBA"]}]
+          elif franja == "manana":
               m = json.load(open("mensajes.json", encoding="utf-8")).get(fecha)
               envios = [m] if m and m.get("texto") else []
           else:
