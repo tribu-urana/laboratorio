@@ -1,14 +1,11 @@
 # Mensajes diarios de Acuaris en el grupo del Laboratorio.
-# Mañana: 8:00 de Chile (11:00 UTC en verano), lee mensajes.json (texto del día + botón).
-# Tarde: 18:30 de Chile (21:30 UTC en verano), lee tarde.json (una o dos intervenciones para conversar).
-# GitHub puede atrasar cada envío algunos minutos. Si la fecha no está en el archivo, no envía nada.
+# Los envíos los dispara cron-job.org (cuenta de Vero) llamando a este workflow con franja=manana (8:00 Chile) y franja=tarde (18:30 Chile).
+# Mañana lee mensajes.json (texto del día + botón). Tarde lee tarde.json (una o dos intervenciones para conversar).
+# Se quitó el schedule interno de GitHub porque atrasaba los envíos entre 3 y 10 horas. Si la fecha no está en el archivo, no envía nada.
 # Para pausarlo: pestaña Actions > "Mensaje diario de Acuaris" > "Disable workflow".
 name: Mensaje diario de Acuaris
 
 on:
-  schedule:
-    - cron: "0 11 * * *"
-    - cron: "30 21 * * *"
   workflow_dispatch:
     inputs:
       fecha:
